@@ -1,0 +1,13 @@
+{
+  "id": "milestone-progress",
+  "name": "Milestone Progress Tracker",
+  "version": "1.0.0",
+  "description": "Track milestone progress with clear progress bars for leftover time, assigned tasks, and completed tasks across all or selected projects",
+  "manifestVersion": 1,
+  "minSupVersion": "14.0.0",
+  "icon": "icon.svg",
+  "iFrame": true,
+  "sidePanel": false,
+  "permissions": ["getTasks", "updateTask", "getAllProjects", "getAllTags", "showSnack"],
+  "hooks": ["taskUpdate", "taskComplete", "taskCreated", "taskDelete", "persistedDataChanged"]
+}

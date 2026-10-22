@@ -1,0 +1,19 @@
+{
+  "name": "milestone-progress",
+  "version": "1.0.0",
+  "description": "Super Productivity plugin to display milestone progress, leftover time, assigned tasks, and completed tasks with simple progress bars across all or selected projects",
+  "scripts": {
+    "build": "node build.js",
+    "package": "node build.js"
+  },
+  "keywords": [
+    "super-productivity",
+    "plugin",
+    "milestones",
+    "progress-bar",
+    "time-tracking",
+    "project-management"
+  ],
+  "author": "",
+  "license": "MIT"
+}

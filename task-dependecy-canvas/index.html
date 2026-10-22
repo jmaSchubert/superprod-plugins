@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Dependency Canvas</title>
+  <style>
+    /* CSS Variables & Theme Integration */
+    :root {
+      --bg: #181926;
+      --bg-darker: #12131c;
+      --card-bg: #24273a;
+      --card-bg-hover: #2a2e45;
+      --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --card-border-radius: 10px;
+      --text-color: #cad3f5;
+      --text-color-muted: #939ab7;
+      --divider-color: rgba(255, 255, 255, 0.1);
+      --c-primary: #8aadf4;
+      --c-primary-hover: #7ba2eb;
+      --c-accent: #c6a0f6;
+      --c-warn: #ed8796;
+      --c-success: #a6da95;
+      --c-amber: #eed49f;
+      --font-primary-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --sidebar-width: 330px;
+      --node-width: 270px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-primary-stack);
+      background-color: var(--bg);
+      color: var(--text-color);
+      user-select: none;
+    }
+
+    /* Top Layout Container */
+    #app-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* Left Sidebar: Unlinked / Backlog Tasks */
+    #sidebar {
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--bg-darker);
+      border-right: 1px solid var(--divider-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    #sidebar.collapsed {
+      width: 48px;
+    }
+
+    #sidebar.collapsed .sidebar-content {
+      display: none;
+    }
+
+    #sidebar.collapsed .sidebar-collapsed-btn {
+      display: flex;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--divider-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .sidebar-title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .sidebar-title {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-count {
+      background: var(--c-primary);
+      color: #12131c;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 12px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-color-muted);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      font-size: 14px;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-color);
+      border-color: var(--divider-color);
+    }
+
+    .sidebar-collapsed-btn {
+      display: none;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 16px;
+      cursor: pointer;
+      gap: 16px;
+    }
+
+    .vertical-text {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 1px;
+      font-size: 13px;
+      color: var(--text-color-muted);
+      font-weight: 600;
+    }
+
+    .sidebar-filters {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid var(--divider-color);
+    }
+
+    .search-input-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-box input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--divider-color);
+      color: var(--text-color);
+      padding: 7px 10px 7px 28px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input-box input:focus {
+      border-color: var(--c-primary);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .search-input-box .search-icon {
+      position: absolute;
+      left: 8px;
+      color: var(--text-color-muted);
+      pointer-events: none;
+      font-size: 12px;
+    }
+
+    .filter-select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--divider-color);
+      color: var(--text-color);
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-select option {
+      background: var(--bg-darker);
+      color: var(--text-color);
+    }
+
+    .sidebar-actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text-color-muted);
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .text-btn {
+      background: none;
+      border: none;
+      color: var(--c-primary);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .text-btn:hover {
+      background: rgba(138, 173, 244, 0.15);
+      text-decoration: underline;
+    }
+
+    /* Unlinked List */
+    .unlinked-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .unlinked-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .unlinked-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    /* Task Box Item (Sidebar variant) */
+    .task-card-sidebar {
+      background: var(--card-bg);
+      border: 1px solid var(--divider-color);
+      border-radius: var(--card-border-radius);
+      padding: 10px 12px;
+      cursor: grab;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .task-card-sidebar:hover {
+      background: var(--card-bg-hover);
+      border-color: var(--c-primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .task-card-sidebar:active {
+      cursor: grabbing;
+    }
+
+    .task-card-sidebar.dragging {
+      opacity: 0.4;
+      border-style: dashed;
+    }
+
+    /* Task Box Shared Elements (title, board, duration, deadline, priority) */
+    .card-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .pill-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .board-pill {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-color);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .board-pill .color-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .priority-pill {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .priority-urgent, .priority-p1 {
+      background: rgba(237, 135, 150, 0.2);
+      color: #ed8796;
+      border: 1px solid rgba(237, 135, 150, 0.4);
+    }
+
+    .priority-high, .priority-p2 {
+      background: rgba(238, 212, 159, 0.2);
+      color: #eed49f;
+      border: 1px solid rgba(238, 212, 159, 0.4);
+    }
+
+    .priority-medium, .priority-p3 {
+      background: rgba(138, 173, 244, 0.2);
+      color: #8aadf4;
+      border: 1px solid rgba(138, 173, 244, 0.4);
+    }
+
+    .priority-low, .priority-p4 {
+      background: rgba(166, 218, 149, 0.2);
+      color: #a6da95;
+      border: 1px solid rgba(166, 218, 149, 0.4);
+    }
+
+    .priority-normal {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-color-muted);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .task-checkbox {
+      margin-top: 3px;
+      cursor: pointer;
+      accent-color: var(--c-primary);
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--text-color);
+      word-break: break-word;
+    }
+
+    .card-title.done {
+      text-decoration: line-through;
+      color: var(--text-color-muted);
+    }
+
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-color-muted);
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 8px;
+    }
+
+    .card-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .deadline-overdue {
+      color: var(--c-warn);
+      font-weight: 600;
+    }
+
+    .deadline-today {
+      color: var(--c-amber);
+      font-weight: 600;
+    }
+
+    .sidebar-add-btn {
+      background: transparent;
+      border: 1px solid var(--divider-color);
+      color: var(--c-primary);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: auto;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-add-btn:hover {
+      background: var(--c-primary);
+      color: #12131c;
+      border-color: var(--c-primary);
+    }
+
+    .empty-state {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--text-color-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.6;
+    }
+
+    /* Main Canvas Area */
+    #canvas-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      background-color: var(--bg);
+      cursor: default;
+    }
+
+    #canvas-container.panning {
+      cursor: grab;
+    }
+
+    #canvas-container.panning:active {
+      cursor: grabbing;
+    }
+
+    /* Grid Background */
+    .canvas-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Transformed Canvas World */
+    #canvas-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 0 0;
+      will-change: transform;
+      z-index: 1;
+    }
+
+    /* SVG Edges Layer */
+    #edges-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50000px;
+      height: 50000px;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 2;
+    }
+
+    .edge-path {
+      fill: none;
+      stroke: rgba(138, 173, 244, 0.45);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      pointer-events: stroke;
+      cursor: pointer;
+      transition: stroke 0.15s ease, stroke-width 0.15s ease;
+    }
+
+    .edge-path:hover, .edge-path.hovered {
+      stroke: var(--c-primary);
+      stroke-width: 4;
+      filter: drop-shadow(0 0 6px rgba(138, 173, 244, 0.6));
+    }
+
+    .edge-path.edge-blocked {
+      stroke: rgba(237, 135, 150, 0.65);
+      stroke-dasharray: 6 3;
+    }
+
+    .edge-path.edge-blocked:hover {
+      stroke: var(--c-warn);
+      stroke-width: 4;
+    }
+
+    .edge-path.edge-satisfied {
+      stroke: rgba(166, 218, 149, 0.5);
+    }
+
+    .edge-path.edge-satisfied:hover {
+      stroke: var(--c-success);
+      stroke-width: 4;
+    }
+
+    .edge-path.edge-highlight-upstream {
+      stroke: #eed49f !important;
+      stroke-width: 4.5 !important;
+      filter: drop-shadow(0 0 8px rgba(238, 212, 159, 0.8));
+    }
+
+    .edge-path.edge-highlight-downstream {
+      stroke: #8aadf4 !important;
+      stroke-width: 4.5 !important;
+      filter: drop-shadow(0 0 8px rgba(138, 173, 244, 0.8));
+    }
+
+    .edge-delete-btn {
+      cursor: pointer;
+      pointer-events: all;
+      transition: transform 0.15s ease;
+    }
+
+    .edge-delete-btn:hover {
+      transform: scale(1.25);
+    }
+
+    #draft-edge {
+      fill: none;
+      stroke: var(--c-accent);
+      stroke-width: 3;
+      stroke-dasharray: 6 4;
+      pointer-events: none;
+      filter: drop-shadow(0 0 6px rgba(198, 160, 246, 0.6));
+    }
+
+    /* Nodes Layer */
+    #nodes-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Task Canvas Box */
+    .canvas-node {
+      position: absolute;
+      width: var(--node-width);
+      background: var(--card-bg);
+      border: 1.5px solid var(--divider-color);
+      border-radius: var(--card-border-radius);
+      box-shadow: var(--card-shadow);
+      padding: 12px 14px;
+      pointer-events: auto;
+      cursor: grab;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .canvas-node:hover {
+      border-color: rgba(138, 173, 244, 0.5);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .canvas-node.dragging {
+      cursor: grabbing;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+      border-color: var(--c-primary);
+      z-index: 100 !important;
+    }
+
+    .canvas-node.selected {
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 2px rgba(138, 173, 244, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .canvas-node.highlight-upstream {
+      border-color: #eed49f !important;
+      box-shadow: 0 0 0 2px rgba(238, 212, 159, 0.5), 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .canvas-node.highlight-downstream {
+      border-color: #8aadf4 !important;
+      box-shadow: 0 0 0 2px rgba(138, 173, 244, 0.5), 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .canvas-node.dimmed {
+      opacity: 0.3;
+    }
+
+    /* Dependency Status Bar */
+    .dep-status-bar {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dep-status-blocked {
+      background: rgba(237, 135, 150, 0.18);
+      color: #ed8796;
+      border: 1px solid rgba(237, 135, 150, 0.35);
+    }
+
+    .dep-status-ready {
+      background: rgba(166, 218, 149, 0.15);
+      color: #a6da95;
+      border: 1px solid rgba(166, 218, 149, 0.3);
+    }
+
+    .dep-status-done {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-color-muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Connection Ports on Canvas Box */
+    .port {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 2.5px solid var(--c-primary);
+      cursor: crosshair;
+      z-index: 10;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .port:hover {
+      transform: translateY(-50%) scale(1.35);
+      background: var(--c-primary);
+      box-shadow: 0 0 8px var(--c-primary);
+    }
+
+    .port-in {
+      left: -8px;
+      border-color: #eed49f;
+    }
+
+    .port-in:hover {
+      background: #eed49f;
+      box-shadow: 0 0 8px #eed49f;
+    }
+
+    .port-out {
+      right: -8px;
+      border-color: #8aadf4;
+    }
+
+    .port-out:hover {
+      background: #8aadf4;
+      box-shadow: 0 0 8px #8aadf4;
+    }
+
+    .port.connecting-source {
+      background: #8aadf4;
+      animation: pulse-port 1s infinite alternate;
+    }
+
+    @keyframes pulse-port {
+      from { transform: translateY(-50%) scale(1.1); box-shadow: 0 0 4px #8aadf4; }
+      to { transform: translateY(-50%) scale(1.5); box-shadow: 0 0 12px #8aadf4; }
+    }
+
+    .node-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+    }
+
+    .node-action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-color-muted);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 11px;
+      transition: all 0.15s ease;
+      line-height: 1;
+    }
+
+    .node-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+    }
+
+    .node-action-btn.btn-remove:hover {
+      color: var(--c-warn);
+      background: rgba(237, 135, 150, 0.15);
+    }
+
+    /* Floating Toolbar */
+    .floating-toolbar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(24, 25, 38, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--divider-color);
+      border-radius: 10px;
+      padding: 6px 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      z-index: 10;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--divider-color);
+      margin: 0 4px;
+    }
+
+    .btn-toolbar {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid transparent;
+      color: var(--text-color);
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      font-weight: 500;
+    }
+
+    .btn-toolbar:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--divider-color);
+    }
+
+    .btn-toolbar.btn-primary {
+      background: var(--c-primary);
+      color: #12131c;
+      font-weight: 600;
+    }
+
+    .btn-toolbar.btn-primary:hover {
+      background: var(--c-primary-hover);
+    }
+
+    .zoom-display {
+      font-size: 12px;
+      color: var(--text-color-muted);
+      min-width: 44px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Bottom Status Bar */
+    .floating-status-bar {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(24, 25, 38, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--divider-color);
+      border-radius: 8px;
+      padding: 6px 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      font-size: 11.5px;
+      color: var(--text-color-muted);
+      z-index: 10;
+    }
+
+    .status-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-stat-item b {
+      color: var(--text-color);
+    }
+
+    /* Legend Overlay */
+    .floating-legend {
+      position: absolute;
+      bottom: 16px;
+      left: calc(var(--sidebar-width) + 16px);
+      background: rgba(24, 25, 38, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--divider-color);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text-color-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+      transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #sidebar.collapsed ~ #canvas-container .floating-legend {
+      left: 64px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Modal / Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #24273a;
+      border: 1px solid var(--c-primary);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      animation: toast-in 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.toast-warn {
+      border-color: var(--c-warn);
+      color: #f5bde6;
+    }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Help Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--divider-color);
+      border-radius: 12px;
+      width: 480px;
+      max-width: 90%;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-box h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .help-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-color);
+      margin: 16px 0;
+    }
+
+    .help-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.4;
+    }
+
+    .help-key {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11.5px;
+      flex-shrink: 0;
+    }
+
+    /* Dragging ghost over canvas */
+    .drop-indicator {
+      display: none;
+      position: absolute;
+      pointer-events: none;
+      border: 2px dashed var(--c-primary);
+      background: rgba(138, 173, 244, 0.1);
+      border-radius: var(--card-border-radius);
+      width: var(--node-width);
+      height: 110px;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- Left Sidebar: Unlinked Tasks -->
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title-area">
+          <span class="sidebar-title">Unlinked Tasks</span>
+          <span id="unlinked-count" class="badge-count">0</span>
+        </div>
+        <button id="btn-toggle-sidebar" class="icon-btn" title="Toggle Sidebar">◀</button>
+      </div>
+
+      <div class="sidebar-collapsed-btn" id="btn-expand-sidebar" title="Expand Sidebar">
+        <span class="icon-btn">▶</span>
+        <span class="vertical-text">UNLINKED TASKS</span>
+      </div>
+
+      <div class="sidebar-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        <!-- Filters -->
+        <div class="sidebar-filters">
+          <div class="search-input-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="task-search" placeholder="Search tasks..." />
+          </div>
+          <select id="project-filter" class="filter-select">
+            <option value="ALL">All Boards / Projects</option>
+          </select>
+        </div>
+
+        <div class="sidebar-actions-bar">
+          <span id="sidebar-filter-info">Showing unplaced</span>
+          <button id="btn-add-all-canvas" class="text-btn">Place All on Canvas</button>
+        </div>
+
+        <!-- Task List -->
+        <div id="unlinked-task-list" class="unlinked-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas Container -->
+    <div id="canvas-container">
+      <!-- Background SVG Grid -->
+      <svg class="canvas-grid" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="1.2" fill="rgba(255, 255, 255, 0.08)" />
+          </pattern>
+        </defs>
+        <rect id="grid-rect" width="100%" height="100%" fill="url(#grid-pattern)" />
+      </svg>
+
+      <!-- Transformed World (Pan & Zoom) -->
+      <div id="canvas-world">
+        <!-- SVG Layer for Dependencies -->
+        <svg id="edges-svg">
+          <defs>
+            <!-- Normal Arrowhead -->
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="rgba(138, 173, 244, 0.7)" />
+            </marker>
+            <!-- Hovered Arrowhead -->
+            <marker id="arrow-hover" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#8aadf4" />
+            </marker>
+            <!-- Blocked Arrowhead -->
+            <marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ed8796" />
+            </marker>
+            <!-- Satisfied Arrowhead -->
+            <marker id="arrow-satisfied" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#a6da95" />
+            </marker>
+            <!-- Upstream Highlight Arrowhead -->
+            <marker id="arrow-upstream" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#eed49f" />
+            </marker>
+            <!-- Downstream Highlight Arrowhead -->
+            <marker id="arrow-downstream" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#8aadf4" />
+            </marker>
+          </defs>
+
+          <g id="edges-group"></g>
+          <path id="draft-edge" style="display: none;" d="" />
+        </svg>
+
+        <!-- Nodes Container for Task Boxes -->
+        <div id="nodes-container"></div>
+      </div>
+
+      <!-- Drop indicator when dragging from sidebar onto canvas -->
+      <div id="drop-indicator" class="drop-indicator"></div>
+
+      <!-- Top Floating Toolbar -->
+      <div class="floating-toolbar">
+        <div class="toolbar-group">
+          <button id="btn-auto-layout" class="btn-toolbar btn-primary" title="Automatically arrange tasks by dependencies">
+            <span>⚡</span> Auto Layout
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+          <button id="btn-zoom-out" class="btn-toolbar" title="Zoom Out">-</button>
+          <span id="zoom-level-text" class="zoom-display">100%</span>
+          <button id="btn-zoom-in" class="btn-toolbar" title="Zoom In">+</button>
+          <button id="btn-fit-screen" class="btn-toolbar" title="Fit All to View">Fit</button>
+          <button id="btn-reset-zoom" class="btn-toolbar" title="Reset View 1:1">1:1</button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+          <button id="btn-clear-canvas" class="btn-toolbar" title="Return all canvas tasks to sidebar">Reset Canvas</button>
+          <button id="btn-help" class="btn-toolbar" title="Controls and Help">?</button>
+        </div>
+      </div>
+
+      <!-- Bottom Status Bar -->
+      <div class="floating-status-bar">
+        <div class="status-stat-item">
+          <span>On Canvas:</span>
+          <b id="stat-canvas-count">0</b>
+        </div>
+        <div class="status-stat-item">
+          <span>Dependencies:</span>
+          <b id="stat-deps-count">0</b>
+        </div>
+        <div class="status-stat-item">
+          <span>Blocked:</span>
+          <b id="stat-blocked-count" style="color: var(--c-warn)">0</b>
+        </div>
+      </div>
+
+      <!-- Legend Overlay -->
+      <div class="floating-legend">
+        <span class="legend-item"><span class="legend-dot" style="background: #eed49f"></span> Depends On (In)</span>
+        <span class="legend-item">→</span>
+        <span class="legend-item"><span class="legend-dot" style="background: #8aadf4"></span> Blocks (Out)</span>
+        <span class="legend-item"><span class="legend-dot" style="background: var(--c-warn)"></span> Blocked Task</span>
+        <span class="legend-item"><span class="legend-dot" style="background: var(--c-success)"></span> Ready Task</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <h2>
+        <span>Task Dependency Canvas Help</span>
+        <button id="btn-close-modal" class="icon-btn">✕</button>
+      </h2>
+      <ul class="help-list">
+        <li>
+          <span class="help-key">Pan Canvas</span>
+          <span>Click &amp; drag on canvas background, or middle-click drag, or Hold <kbd>Space</kbd> + drag.</span>
+        </li>
+        <li>
+          <span class="help-key">Zoom</span>
+          <span>Scroll mouse wheel, or use <kbd>+</kbd> and <kbd>-</kbd> buttons on toolbar.</span>
+        </li>
+        <li>
+          <span class="help-key">Place Tasks</span>
+          <span>Drag tasks from the left sidebar and drop them anywhere on the canvas. Or click <kbd>+</kbd> on a sidebar card.</span>
+        </li>
+        <li>
+          <span class="help-key">Link Tasks</span>
+          <span>Drag from the <b>blue right port (Blocks)</b> of a prerequisite task to the <b>yellow left port (Depends on)</b> of a dependent task.</span>
+        </li>
+        <li>
+          <span class="help-key">Highlight Chain</span>
+          <span>Click any task to highlight all its upstream blockers and downstream dependents. Click background to deselect.</span>
+        </li>
+        <li>
+          <span class="help-key">Delete Link</span>
+          <span>Hover over any dependency arrow line and click the red <kbd>✕</kbd> button that appears.</span>
+        </li>
+        <li>
+          <span class="help-key">Auto Layout</span>
+          <span>Click <b>⚡ Auto Layout</b> to arrange all tasks into clean dependency columns automatically.</span>
+        </li>
+      </ul>
+      <div style="text-align: right; margin-top: 16px;">
+        <button id="btn-close-modal-2" class="btn-toolbar btn-primary" style="padding: 6px 16px;">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded JavaScript Application Logic -->
+  <script>
+    (function () {
+      'use strict';
+
+      // --- Mock Data Fallback for Standalone Browser Testing ---
+      const MOCK_PROJECTS = [
+        { id: 'proj-1', title: 'Website Redesign', theme: { primary: '#3b82f6' } },
+        { id: 'proj-2', title: 'Mobile App API', theme: { primary: '#10b981' } },
+        { id: 'proj-3', title: 'Marketing Campaign', theme: { primary: '#f59e0b' } },
+      ];
+
+      const MOCK_TAGS = [
+        { id: 'tag-p1', title: 'P1 - Urgent', color: '#ef4444' },
+        { id: 'tag-p2', title: 'P2 - High', color: '#f97316' },
+        { id: 'tag-p3', title: 'P3 - Medium', color: '#3b82f6' },
+        { id: 'tag-p4', title: 'P4 - Low', color: '#10b981' },
+        { id: 'tag-fe', title: 'Frontend', color: '#8b5cf6' },
+        { id: 'tag-be', title: 'Backend', color: '#06b6d4' },
+      ];
+
+      const MOCK_TASKS = [
+        {
+          id: 'task-1',
+          title: 'Design System & UI Components',
+          projectId: 'proj-1',
+          tagIds: ['tag-p1', 'tag-fe'],
+          timeEstimate: 14400000, // 4h
+          timeSpent: 7200000,     // 2h
+          dueDay: '2026-10-18',
+          isDone: true,
+        },
+        {
+          id: 'task-2',
+          title: 'Authentication & Database Schema',
+          projectId: 'proj-2',
+          tagIds: ['tag-p1', 'tag-be'],
+          timeEstimate: 18000000, // 5h
+          timeSpent: 18000000,
+          dueDay: '2026-10-19',
+          isDone: true,
+        },
+        {
+          id: 'task-3',
+          title: 'Implement User Dashboard Frontend',
+          projectId: 'proj-1',
+          tagIds: ['tag-p2', 'tag-fe'],
+          timeEstimate: 21600000, // 6h
+          timeSpent: 5400000,     // 1.5h
+          dueDay: '2026-10-22',
+          isDone: false,
+        },
+        {
+          id: 'task-4',
+          title: 'Build REST endpoints for Dashboard',
+          projectId: 'proj-2',
+          tagIds: ['tag-p2', 'tag-be'],
+          timeEstimate: 10800000, // 3h
+          timeSpent: 3600000,     // 1h
+          dueDay: '2026-10-21',
+          isDone: false,
+        },
+        {
+          id: 'task-5',
+          title: 'End-to-End Integration Testing',
+          projectId: 'proj-1',
+          tagIds: ['tag-p3'],
+          timeEstimate: 7200000,  // 2h
+          timeSpent: 0,
+          dueDay: '2026-10-25',
+          isDone: false,
+        },
+        {
+          id: 'task-6',
+          title: 'Landing Page Copywriting',
+          projectId: 'proj-3',
+          tagIds: ['tag-p3'],
+          timeEstimate: 10800000, // 3h
+          timeSpent: 3600000,
+          dueDay: '2026-10-20',
+          isDone: true,
+        },
+        {
+          id: 'task-7',
+          title: 'Launch Product Announcement Email',
+          projectId: 'proj-3',
+          tagIds: ['tag-p1'],
+          timeEstimate: 7200000,
+          timeSpent: 0,
+          dueDay: '2026-10-28',
+          isDone: false,
+        },
+        {
+          id: 'task-8',
+          title: 'Performance Profiling & Optimization',
+          projectId: 'proj-2',
+          tagIds: ['tag-p4'],
+          timeEstimate: 14400000,
+          timeSpent: 0,
+          dueDay: '2026-10-30',
+          isDone: false,
+        }
+      ];
+
+      // Safe API wrapper handling both live Super Productivity environment & standalone mode
+      const isLivePlugin = typeof window.PluginAPI !== 'undefined';
+      let mockStorage = {};
+
+      const API = {
+        async getTasks() {
+          if (isLivePlugin && window.PluginAPI.getTasks) {
+            try { return await window.PluginAPI.getTasks(); } catch (e) { console.warn(e); }
+          }
+          return MOCK_TASKS;
+        },
+        async getAllProjects() {
+          if (isLivePlugin && window.PluginAPI.getAllProjects) {
+            try { return await window.PluginAPI.getAllProjects(); } catch (e) { console.warn(e); }
+          }
+          return MOCK_PROJECTS;
+        },
+        async getAllTags() {
+          if (isLivePlugin && window.PluginAPI.getAllTags) {
+            try { return await window.PluginAPI.getAllTags(); } catch (e) { console.warn(e); }
+          }
+          return MOCK_TAGS;
+        },
+        async updateTask(taskId, updates) {
+          if (isLivePlugin && window.PluginAPI.updateTask) {
+            try { await window.PluginAPI.updateTask(taskId, updates); } catch (e) { console.warn(e); }
+          } else {
+            const t = MOCK_TASKS.find(x => x.id === taskId);
+            if (t) Object.assign(t, updates);
+          }
+        },
+        async selectTask(taskId) {
+          if (isLivePlugin && window.PluginAPI.selectTask) {
+            try { await window.PluginAPI.selectTask(taskId); } catch (e) { console.warn(e); }
+          } else {
+            showToast('Focused task: ' + taskId);
+          }
+        },
+        async persistData(data) {
+          const str = JSON.stringify(data);
+          if (isLivePlugin && window.PluginAPI.persistDataSynced) {
+            try {
+              await window.PluginAPI.persistDataSynced(str, 'task_canvas_state');
+            } catch (e) {
+              console.warn('persistDataSynced error:', e);
+            }
+          }
+          try {
+            localStorage.setItem('task_canvas_state', str);
+          } catch (e) {}
+        },
+        async loadData() {
+          let str = null;
+          if (isLivePlugin && window.PluginAPI.loadSyncedData) {
+            try {
+              str = await window.PluginAPI.loadSyncedData('task_canvas_state');
+            } catch (e) {
+              console.warn('loadSyncedData error:', e);
+            }
+          }
+          if (!str) {
+            try {
+              str = localStorage.getItem('task_canvas_state');
+            } catch (e) {}
+          }
+          if (str) {
+            try { return JSON.parse(str); } catch (e) { console.warn(e); }
+          }
+          return null;
+        },
+        showSnack(msg, type = 'INFO') {
+          if (isLivePlugin && window.PluginAPI.showSnack) {
+            window.PluginAPI.showSnack({ msg, type });
+          } else {
+            showToast(msg, type === 'WARNING' || type === 'ERROR');
+          }
+        }
+      };
+
+      // --- Application State ---
+      let tasks = [];
+      let projectsMap = {};
+      let tagsMap = {};
+
+      // Canvas persistent data:
+      // nodes: { [taskId]: { x, y } }
+      // links: [ { id, from: taskId, to: taskId } ]
+      // viewport: { panX, panY, zoom }
+      let canvasData = {
+        nodes: {},
+        links: [],
+        viewport: { panX: 80, panY: 60, zoom: 1 }
+      };
+
+      // Transient state
+      let selectedNodeId = null;
+      let hoveredEdgeId = null;
+      let connectingSourceId = null; // When drawing a link
+      let isPanning = false;
+      let startPan = { x: 0, y: 0 };
+      let draggingNodeId = null;
+      let dragNodeOffset = { x: 0, y: 0 };
+
+      // DOM Elements
+      const canvasContainer = document.getElementById('canvas-container');
+      const canvasWorld = document.getElementById('canvas-world');
+      const nodesContainer = document.getElementById('nodes-container');
+      const edgesGroup = document.getElementById('edges-group');
+      const draftEdge = document.getElementById('draft-edge');
+      const unlinkedTaskList = document.getElementById('unlinked-task-list');
+      const unlinkedCountBadge = document.getElementById('unlinked-count');
+      const projectFilter = document.getElementById('project-filter');
+      const taskSearchInput = document.getElementById('task-search');
+      const zoomLevelText = document.getElementById('zoom-level-text');
+      const dropIndicator = document.getElementById('drop-indicator');
+      const sidebar = document.getElementById('sidebar');
+
+      const statCanvasCount = document.getElementById('stat-canvas-count');
+      const statDepsCount = document.getElementById('stat-deps-count');
+      const statBlockedCount = document.getElementById('stat-blocked-count');
+
+      // --- Helper Functions ---
+      function formatDuration(ms) {
+        if (!ms || ms <= 0) return '0m';
+        const totalMinutes = Math.floor(ms / (1000 * 60));
+        const hours = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        if (hours === 0) return `${mins}m`;
+        if (mins === 0) return `${hours}h`;
+        return `${hours}h ${mins}m`;
+      }
+
+      function formatDeadline(dueDay, dueWithTime) {
+        if (!dueDay && !dueWithTime) return null;
+        let dueDate;
+        if (dueDay) {
+          dueDate = new Date(dueDay + 'T23:59:59');
+        } else {
+          dueDate = new Date(dueWithTime);
+        }
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+        let formatted = dueDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        let statusClass = '';
+
+        if (diffDays < 0) {
+          statusClass = 'deadline-overdue';
+          formatted = `${formatted} (Overdue)`;
+        } else if (diffDays === 0) {
+          statusClass = 'deadline-today';
+          formatted = 'Today';
+        } else if (diffDays === 1) {
+          formatted = 'Tomorrow';
+        }
+
+        return { text: formatted, class: statusClass };
+      }
+
+      function extractPriority(task) {
+        if (!task.tagIds || task.tagIds.length === 0) {
+          return { label: 'Normal', class: 'priority-normal' };
+        }
+
+        // Look for priority keywords in assigned tags
+        for (const tagId of task.tagIds) {
+          const tag = tagsMap[tagId];
+          if (!tag) continue;
+          const name = tag.title.toLowerCase();
+
+          if (name.includes('urgent') || name.includes('p1') || name.includes('critical')) {
+            return { label: 'P1 Urgent', class: 'priority-urgent' };
+          }
+          if (name.includes('high') || name.includes('p2')) {
+            return { label: 'P2 High', class: 'priority-high' };
+          }
+          if (name.includes('medium') || name.includes('med') || name.includes('p3')) {
+            return { label: 'P3 Medium', class: 'priority-medium' };
+          }
+          if (name.includes('low') || name.includes('p4')) {
+            return { label: 'P4 Low', class: 'priority-low' };
+          }
+        }
+
+        // If no explicit priority tag, use the first tag
+        const firstTag = tagsMap[task.tagIds[0]];
+        if (firstTag) {
+          return { label: firstTag.title, class: 'priority-normal' };
+        }
+
+        return { label: 'Normal', class: 'priority-normal' };
+      }
+
+      function getProjectInfo(task) {
+        if (!task.projectId) {
+          return { title: 'Inbox', color: '#939ab7' };
+        }
+        const proj = projectsMap[task.projectId];
+        if (proj) {
+          return {
+            title: proj.title || 'Project',
+            color: (proj.theme && proj.theme.primary) || '#8aadf4'
+          };
+        }
+        return { title: 'Project', color: '#8aadf4' };
+      }
+
+      function showToast(message, isWarn = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast' + (isWarn ? ' toast-warn' : '');
+        toast.innerHTML = `<span>${isWarn ? '⚠️' : 'ℹ️'}</span> <span>${message}</span>`;
+        document.getElementById('toast-container').appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          setTimeout(() => toast.remove(), 250);
+        }, 3000);
+      }
+
+      // --- Dependency Analysis ---
+      // Calculates upstream prerequisites and downstream dependents for highlighting and block detection
+      function getDependencyStatus(taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return { isBlocked: false, isReady: true, blockers: [] };
+        if (task.isDone) return { isBlocked: false, isReady: false, blockers: [], isDone: true };
+
+        // Incoming links: { from, to: taskId }
+        const incomingLinks = canvasData.links.filter(l => l.to === taskId);
+        const blockers = [];
+
+        for (const link of incomingLinks) {
+          const prereqTask = tasks.find(t => t.id === link.from);
+          if (prereqTask && !prereqTask.isDone) {
+            blockers.push(prereqTask);
+          }
+        }
+
+        return {
+          isBlocked: blockers.length > 0,
+          isReady: blockers.length === 0,
+          blockers
+        };
+      }
+
+      function getDependencyChains(taskId) {
+        const upstream = new Set();
+        const downstream = new Set();
+
+        // Traverse upstream (prerequisites)
+        function findUpstream(id) {
+          const inLinks = canvasData.links.filter(l => l.to === id);
+          for (const l of inLinks) {
+            if (!upstream.has(l.from)) {
+              upstream.add(l.from);
+              findUpstream(l.from);
+            }
+          }
+        }
+
+        // Traverse downstream (dependents)
+        function findDownstream(id) {
+          const outLinks = canvasData.links.filter(l => l.from === id);
+          for (const l of outLinks) {
+            if (!downstream.has(l.to)) {
+              downstream.add(l.to);
+              findDownstream(l.to);
+            }
+          }
+        }
+
+        findUpstream(taskId);
+        findDownstream(taskId);
+
+        return { upstream, downstream };
+      }
+
+      // Cycle detection: checks if linking fromId -> toId would create a loop
+      function wouldCreateCycle(fromId, toId) {
+        if (fromId === toId) return true;
+
+        const visited = new Set();
+        const stack = [toId];
+
+        while (stack.length > 0) {
+          const curr = stack.pop();
+          if (curr === fromId) return true; // Reached fromId -> cycle!
+          if (!visited.has(curr)) {
+            visited.add(curr);
+            const outgoing = canvasData.links.filter(l => l.from === curr);
+            for (const l of outgoing) {
+              stack.push(l.to);
+            }
+          }
+        }
+
+        return false;
+      }
+
+      // --- Viewport & World Transforms ---
+      function updateViewportTransform() {
+        const { panX, panY, zoom } = canvasData.viewport;
+        canvasWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+        zoomLevelText.textContent = `${Math.round(zoom * 100)}%`;
+
+        // Update SVG background grid offset & scale
+        const pattern = document.getElementById('grid-pattern');
+        if (pattern) {
+          const baseSize = 30 * zoom;
+          pattern.setAttribute('width', baseSize);
+          pattern.setAttribute('height', baseSize);
+          pattern.setAttribute('x', panX % baseSize);
+          pattern.setAttribute('y', panY % baseSize);
+        }
+      }
+
+      function clientToWorld(clientX, clientY) {
+        const rect = canvasContainer.getBoundingClientRect();
+        const screenX = clientX - rect.left;
+        const screenY = clientY - rect.top;
+        const { panX, panY, zoom } = canvasData.viewport;
+        return {
+          x: (screenX - panX) / zoom,
+          y: (screenY - panY) / zoom
+        };
+      }
+
+      // --- Rendering Sidebar List ---
+      function renderSidebar() {
+        const filterProj = projectFilter.value;
+        const searchQuery = taskSearchInput.value.trim().toLowerCase();
+
+        // Unlinked = active tasks that are NOT on the canvas
+        const unlinkedTasks = tasks.filter(t => {
+          if (canvasData.nodes[t.id]) return false; // already on canvas
+          if (filterProj !== 'ALL' && (t.projectId || 'NONE') !== filterProj) return false;
+          if (searchQuery && !t.title.toLowerCase().includes(searchQuery)) return false;
+          return true;
+        });
+
+        unlinkedCountBadge.textContent = unlinkedTasks.length;
+        unlinkedTaskList.innerHTML = '';
+
+        if (unlinkedTasks.length === 0) {
+          unlinkedTaskList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🎉</div>
+              <p><b>All tasks are on the canvas!</b></p>
+              <p style="margin-top: 4px; font-size: 11.5px;">Drag tasks from canvas to remove, or create new tasks in Super Productivity.</p>
+            </div>
+          `;
+          return;
+        }
+
+        unlinkedTasks.forEach(task => {
+          const card = document.createElement('div');
+          card.className = 'task-card-sidebar';
+          card.draggable = true;
+          card.dataset.taskId = task.id;
+
+          const proj = getProjectInfo(task);
+          const priority = extractPriority(task);
+          const deadline = formatDeadline(task.dueDay, task.dueWithTime);
+          const spent = formatDuration(task.timeSpent);
+          const est = formatDuration(task.timeEstimate);
+
+          card.innerHTML = `
+            <div class="card-top-row">
+              <div class="pill-group">
+                <span class="board-pill" title="${proj.title}">
+                  <span class="color-dot" style="background: ${proj.color}"></span>
+                  ${proj.title}
+                </span>
+                <span class="priority-pill ${priority.class}">${priority.label}</span>
+              </div>
+              <button class="sidebar-add-btn" title="Add to Canvas" data-add-id="${task.id}">+ Add</button>
+            </div>
+            <div class="card-title-row">
+              <input type="checkbox" class="task-checkbox" ${task.isDone ? 'checked' : ''} data-toggle-id="${task.id}" />
+              <span class="card-title ${task.isDone ? 'done' : ''}">${escapeHtml(task.title)}</span>
+            </div>
+            <div class="card-meta-row">
+              <span class="card-meta-item" title="Time Spent / Estimate">
+                ⏱️ ${spent} / ${est}
+              </span>
+              ${deadline ? `<span class="card-meta-item ${deadline.class}" title="Deadline">📅 ${deadline.text}</span>` : ''}
+            </div>
+          `;
+
+          // Drag and drop from sidebar
+          card.addEventListener('dragstart', (e) => {
+            card.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', task.id);
+            e.dataTransfer.effectAllowed = 'copyMove';
+          });
+
+          card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            dropIndicator.style.display = 'none';
+          });
+
+          // Quick Add button
+          const addBtn = card.querySelector('[data-add-id]');
+          addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            placeTaskAtCenter(task.id);
+          });
+
+          // Toggle task done
+          const checkbox = card.querySelector('[data-toggle-id]');
+          checkbox.addEventListener('change', async (e) => {
+            e.stopPropagation();
+            task.isDone = checkbox.checked;
+            await API.updateTask(task.id, { isDone: task.isDone });
+            renderSidebar();
+            renderCanvas();
+          });
+
+          unlinkedTaskList.appendChild(card);
+        });
+      }
+
+      // --- Rendering Canvas Nodes & Edges ---
+      function renderCanvas() {
+        renderCanvasNodes();
+        renderCanvasEdges();
+        updateStats();
+      }
+
+      function renderCanvasNodes() {
+        nodesContainer.innerHTML = '';
+        const chains = selectedNodeId ? getDependencyChains(selectedNodeId) : null;
+
+        Object.keys(canvasData.nodes).forEach(taskId => {
+          const pos = canvasData.nodes[taskId];
+          const task = tasks.find(t => t.id === taskId);
+          if (!task) return;
+
+          const proj = getProjectInfo(task);
+          const priority = extractPriority(task);
+          const deadline = formatDeadline(task.dueDay, task.dueWithTime);
+          const spent = formatDuration(task.timeSpent);
+          const est = formatDuration(task.timeEstimate);
+          const depStatus = getDependencyStatus(taskId);
+
+          const nodeEl = document.createElement('div');
+          nodeEl.className = 'canvas-node';
+          nodeEl.id = `node-${taskId}`;
+          nodeEl.dataset.taskId = taskId;
+          nodeEl.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+
+          // Selection and Highlight state
+          if (selectedNodeId === taskId) {
+            nodeEl.classList.add('selected');
+          } else if (chains) {
+            if (chains.upstream.has(taskId)) {
+              nodeEl.classList.add('highlight-upstream');
+            } else if (chains.downstream.has(taskId)) {
+              nodeEl.classList.add('highlight-downstream');
+            } else {
+              nodeEl.classList.add('dimmed');
+            }
+          }
+
+          let depStatusHtml = '';
+          if (depStatus.isDone) {
+            depStatusHtml = `<div class="dep-status-bar dep-status-done"><span>✓</span> Completed</div>`;
+          } else if (depStatus.isBlocked) {
+            depStatusHtml = `<div class="dep-status-bar dep-status-blocked" title="Blocked by ${depStatus.blockers.map(b => b.title).join(', ')}"><span>⛔</span> Blocked by ${depStatus.blockers.length} task(s)</div>`;
+          } else {
+            depStatusHtml = `<div class="dep-status-bar dep-status-ready"><span>🟢</span> Ready to start</div>`;
+          }
+
+          nodeEl.innerHTML = `
+            <!-- Ports for Linking -->
+            <div class="port port-in ${connectingSourceId ? 'connecting-target' : ''}" data-port="in" data-task-id="${taskId}" title="Depends on (incoming prerequisite)"></div>
+            <div class="port port-out ${connectingSourceId === taskId ? 'connecting-source' : ''}" data-port="out" data-task-id="${taskId}" title="Blocks (outgoing dependent)"></div>
+
+            <!-- Card Header -->
+            <div class="card-top-row">
+              <div class="pill-group">
+                <span class="board-pill" title="${proj.title}">
+                  <span class="color-dot" style="background: ${proj.color}"></span>
+                  ${proj.title}
+                </span>
+                <span class="priority-pill ${priority.class}">${priority.label}</span>
+              </div>
+              <div class="node-actions">
+                <button class="node-action-btn" title="Focus Task in App" data-action="focus">↗</button>
+                <button class="node-action-btn btn-remove" title="Remove from Canvas" data-action="remove">✕</button>
+              </div>
+            </div>
+
+            <!-- Card Title & Checkbox -->
+            <div class="card-title-row">
+              <input type="checkbox" class="task-checkbox" ${task.isDone ? 'checked' : ''} data-action="toggle-done" />
+              <span class="card-title ${task.isDone ? 'done' : ''}">${escapeHtml(task.title)}</span>
+            </div>
+
+            <!-- Dependency Status Indicator -->
+            ${depStatusHtml}
+
+            <!-- Card Meta Footer -->
+            <div class="card-meta-row">
+              <span class="card-meta-item" title="Time Spent / Estimate">
+                ⏱️ ${spent} / ${est}
+              </span>
+              ${deadline ? `<span class="card-meta-item ${deadline.class}" title="Deadline">📅 ${deadline.text}</span>` : ''}
+            </div>
+          `;
+
+          // Node Dragging & Selection
+          nodeEl.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.port') || e.target.closest('.node-action-btn') || e.target.closest('.task-checkbox')) {
+              return;
+            }
+            e.stopPropagation();
+
+            // Set selected node
+            selectedNodeId = (selectedNodeId === taskId) ? null : taskId;
+            renderCanvas();
+
+            // Start dragging node
+            draggingNodeId = taskId;
+            nodeEl.classList.add('dragging');
+            const worldPos = clientToWorld(e.clientX, e.clientY);
+            dragNodeOffset = {
+              x: worldPos.x - pos.x,
+              y: worldPos.y - pos.y
+            };
+          });
+
+          // Focus in Super Productivity
+          nodeEl.querySelector('[data-action="focus"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            API.selectTask(taskId);
+          });
+
+          // Remove from Canvas (puts it back in sidebar)
+          nodeEl.querySelector('[data-action="remove"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeNodeFromCanvas(taskId);
+          });
+
+          // Toggle task done
+          const doneCheckbox = nodeEl.querySelector('[data-action="toggle-done"]');
+          doneCheckbox.addEventListener('change', async (e) => {
+            e.stopPropagation();
+            task.isDone = doneCheckbox.checked;
+            await API.updateTask(taskId, { isDone: task.isDone });
+            renderCanvas();
+            renderSidebar();
+          });
+
+          // Connect Ports events
+          const portOut = nodeEl.querySelector('.port-out');
+          portOut.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startConnecting(taskId);
+          });
+
+          const portIn = nodeEl.querySelector('.port-in');
+          portIn.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
+            if (connectingSourceId) {
+              finishConnecting(connectingSourceId, taskId);
+            }
+          });
+
+          // Card as target for connecting
+          nodeEl.addEventListener('mouseup', (e) => {
+            if (connectingSourceId && connectingSourceId !== taskId) {
+              e.stopPropagation();
+              finishConnecting(connectingSourceId, taskId);
+            }
+          });
+
+          nodesContainer.appendChild(nodeEl);
+        });
+      }
+
+      function renderCanvasEdges() {
+        edgesGroup.innerHTML = '';
+        const chains = selectedNodeId ? getDependencyChains(selectedNodeId) : null;
+        const NODE_WIDTH = 270;
+        const NODE_HEIGHT = 120; // approximate center
+
+        canvasData.links.forEach(link => {
+          const fromPos = canvasData.nodes[link.from];
+          const toPos = canvasData.nodes[link.to];
+          if (!fromPos || !toPos) return;
+
+          const fromTask = tasks.find(t => t.id === link.from);
+          const toTask = tasks.find(t => t.id === link.to);
+
+          // Coords: from right port (Blocks) to left port (Depends on)
+          const x1 = fromPos.x + NODE_WIDTH + 8;
+          const y1 = fromPos.y + (NODE_HEIGHT / 2);
+          const x2 = toPos.x - 8;
+          const y2 = toPos.y + (NODE_HEIGHT / 2);
+
+          const dx = Math.max(Math.abs(x2 - x1) * 0.5, 45);
+          const pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+
+          // Midpoint for delete handle
+          const midX = 0.5 * (x1 + x2);
+          const midY = 0.5 * (y1 + y2);
+
+          const isBlocked = fromTask && !fromTask.isDone && toTask && !toTask.isDone;
+          const isSatisfied = fromTask && fromTask.isDone;
+
+          let edgeClass = 'edge-path';
+          let markerUrl = 'url(#arrow)';
+
+          if (selectedNodeId) {
+            if (chains && chains.upstream.has(link.from) && (chains.upstream.has(link.to) || link.to === selectedNodeId)) {
+              edgeClass += ' edge-highlight-upstream';
+              markerUrl = 'url(#arrow-upstream)';
+            } else if (chains && (chains.downstream.has(link.from) || link.from === selectedNodeId) && chains.downstream.has(link.to)) {
+              edgeClass += ' edge-highlight-downstream';
+              markerUrl = 'url(#arrow-downstream)';
+            } else {
+              edgeClass += ' dimmed';
+            }
+          } else {
+            if (isBlocked) {
+              edgeClass += ' edge-blocked';
+              markerUrl = 'url(#arrow-blocked)';
+            } else if (isSatisfied) {
+              edgeClass += ' edge-satisfied';
+              markerUrl = 'url(#arrow-satisfied)';
+            }
+          }
+
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.dataset.linkId = link.id;
+
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', pathD);
+          path.setAttribute('class', edgeClass);
+          path.setAttribute('marker-end', markerUrl);
+
+          // Edge Hover & Delete Handle
+          const deleteGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          deleteGroup.setAttribute('class', 'edge-delete-btn');
+          deleteGroup.setAttribute('transform', `translate(${midX}, ${midY})`);
+          deleteGroup.style.display = 'none';
+
+          deleteGroup.innerHTML = `
+            <circle cx="0" cy="0" r="10" fill="#24273a" stroke="#ed8796" stroke-width="1.5" />
+            <text x="0" y="3.5" text-anchor="middle" fill="#ed8796" font-size="11" font-weight="bold">✕</text>
+          `;
+
+          deleteGroup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteLink(link.id);
+          });
+
+          g.addEventListener('mouseenter', () => {
+            deleteGroup.style.display = 'block';
+            path.classList.add('hovered');
+            path.setAttribute('marker-end', 'url(#arrow-hover)');
+          });
+
+          g.addEventListener('mouseleave', () => {
+            deleteGroup.style.display = 'none';
+            path.classList.remove('hovered');
+            path.setAttribute('marker-end', markerUrl);
+          });
+
+          g.appendChild(path);
+          g.appendChild(deleteGroup);
+          edgesGroup.appendChild(g);
+        });
+      }
+
+      function updateStats() {
+        const count = Object.keys(canvasData.nodes).length;
+        const depsCount = canvasData.links.length;
+        let blockedCount = 0;
+
+        Object.keys(canvasData.nodes).forEach(id => {
+          if (getDependencyStatus(id).isBlocked) blockedCount++;
+        });
+
+        statCanvasCount.textContent = count;
+        statDepsCount.textContent = depsCount;
+        statBlockedCount.textContent = blockedCount;
+      }
+
+      // --- Node & Link Manipulations ---
+      function placeTaskAtCenter(taskId) {
+        const rect = canvasContainer.getBoundingClientRect();
+        const screenCenterX = rect.width / 2;
+        const screenCenterY = rect.height / 2;
+        const worldPos = clientToWorld(rect.left + screenCenterX, rect.top + screenCenterY);
+
+        // Slight jitter to prevent exact overlap
+        const jitterX = (Math.random() - 0.5) * 60;
+        const jitterY = (Math.random() - 0.5) * 60;
+
+        canvasData.nodes[taskId] = {
+          x: Math.round(worldPos.x - 135 + jitterX),
+          y: Math.round(worldPos.y - 60 + jitterY)
+        };
+
+        API.persistData(canvasData);
+        renderSidebar();
+        renderCanvas();
+      }
+
+      function addNodeToCanvas(taskId, worldX, worldY) {
+        canvasData.nodes[taskId] = {
+          x: Math.round(worldX),
+          y: Math.round(worldY)
+        };
+        API.persistData(canvasData);
+        renderSidebar();
+        renderCanvas();
+      }
+
+      function removeNodeFromCanvas(taskId) {
+        delete canvasData.nodes[taskId];
+        // Remove connected links
+        canvasData.links = canvasData.links.filter(l => l.from !== taskId && l.to !== taskId);
+        if (selectedNodeId === taskId) selectedNodeId = null;
+
+        API.persistData(canvasData);
+        renderSidebar();
+        renderCanvas();
+      }
+
+      function startConnecting(sourceTaskId) {
+        connectingSourceId = sourceTaskId;
+        draftEdge.style.display = 'block';
+
+        const sourcePos = canvasData.nodes[sourceTaskId];
+        const x1 = sourcePos.x + 270 + 8;
+        const y1 = sourcePos.y + 60;
+
+        function onMouseMove(e) {
+          const worldPos = clientToWorld(e.clientX, e.clientY);
+          const x2 = worldPos.x;
+          const y2 = worldPos.y;
+          const dx = Math.max(Math.abs(x2 - x1) * 0.5, 45);
+          draftEdge.setAttribute('d', `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
+        }
+
+        function onMouseUp(e) {
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+          draftEdge.style.display = 'none';
+
+          // If mouseup is not over a valid target, cancel connecting
+          setTimeout(() => {
+            connectingSourceId = null;
+            renderCanvas();
+          }, 50);
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      }
+
+      function finishConnecting(fromId, toId) {
+        connectingSourceId = null;
+        draftEdge.style.display = 'none';
+
+        if (fromId === toId) {
+          showToast('Cannot link a task to itself', true);
+          return;
+        }
+
+        // Check if link already exists
+        const exists = canvasData.links.some(l => l.from === fromId && l.to === toId);
+        if (exists) {
+          showToast('Dependency already exists', true);
+          return;
+        }
+
+        // Cycle check
+        if (wouldCreateCycle(fromId, toId)) {
+          showToast('Circular dependency detected! This link would create an infinite loop.', true);
+          return;
+        }
+
+        const newLink = {
+          id: 'link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          from: fromId,
+          to: toId
+        };
+
+        canvasData.links.push(newLink);
+        API.persistData(canvasData);
+        renderCanvas();
+
+        const fromTask = tasks.find(t => t.id === fromId);
+        const toTask = tasks.find(t => t.id === toId);
+        showToast(`Linked: "${fromTask ? fromTask.title : fromId}" blocks "${toTask ? toTask.title : toId}"`);
+      }
+
+      function deleteLink(linkId) {
+        canvasData.links = canvasData.links.filter(l => l.id !== linkId);
+        API.persistData(canvasData);
+        renderCanvas();
+        showToast('Dependency link removed');
+      }
+
+      // --- Smart Auto-Layout Algorithm (Hierarchical Topological Arrangement) ---
+      function autoLayout() {
+        const nodeIds = Object.keys(canvasData.nodes);
+        if (nodeIds.length === 0) return;
+
+        // Build adjacency and compute in-degree
+        const inDegree = {};
+        const adj = {};
+        nodeIds.forEach(id => {
+          inDegree[id] = 0;
+          adj[id] = [];
+        });
+
+        canvasData.links.forEach(l => {
+          if (inDegree[l.to] !== undefined && adj[l.from] !== undefined) {
+            inDegree[l.to]++;
+            adj[l.from].push(l.to);
+          }
+        });
+
+        // Compute layer depth using BFS / Longest Path
+        const layers = {};
+        nodeIds.forEach(id => { layers[id] = 0; });
+
+        // Topological queue
+        const queue = nodeIds.filter(id => inDegree[id] === 0);
+        let maxLayer = 0;
+
+        while (queue.length > 0) {
+          const u = queue.shift();
+          const currLayer = layers[u];
+          for (const v of adj[u]) {
+            layers[v] = Math.max(layers[v], currLayer + 1);
+            maxLayer = Math.max(maxLayer, layers[v]);
+            inDegree[v]--;
+            if (inDegree[v] === 0) {
+              queue.push(v);
+            }
+          }
+        }
+
+        // Group nodes into columns by layer
+        const layerGroups = {};
+        for (let i = 0; i <= maxLayer; i++) {
+          layerGroups[i] = [];
+        }
+        nodeIds.forEach(id => {
+          const l = layers[id] || 0;
+          if (!layerGroups[l]) layerGroups[l] = [];
+          layerGroups[l].push(id);
+        });
+
+        // Compute coordinates
+        const COL_WIDTH = 340;
+        const ROW_HEIGHT = 160;
+        const START_X = 80;
+        const START_Y = 80;
+
+        Object.keys(layerGroups).forEach(layerIndex => {
+          const group = layerGroups[layerIndex];
+          group.forEach((id, rowIndex) => {
+            canvasData.nodes[id] = {
+              x: START_X + parseInt(layerIndex, 10) * COL_WIDTH,
+              y: START_Y + rowIndex * ROW_HEIGHT
+            };
+          });
+        });
+
+        fitToScreen();
+        API.persistData(canvasData);
+        renderCanvas();
+        showToast('Auto layout applied!');
+      }
+
+      function fitToScreen() {
+        const nodeIds = Object.keys(canvasData.nodes);
+        if (nodeIds.length === 0) return;
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        const NODE_WIDTH = 270;
+        const NODE_HEIGHT = 140;
+
+        nodeIds.forEach(id => {
+          const pos = canvasData.nodes[id];
+          minX = Math.min(minX, pos.x);
+          minY = Math.min(minY, pos.y);
+          maxX = Math.max(maxX, pos.x + NODE_WIDTH);
+          maxY = Math.max(maxY, pos.y + NODE_HEIGHT);
+        });
+
+        const rect = canvasContainer.getBoundingClientRect();
+        const padding = 80;
+        const contentW = maxX - minX + padding * 2;
+        const contentH = maxY - minY + padding * 2;
+
+        const zoomX = rect.width / contentW;
+        const zoomY = rect.height / contentH;
+        let targetZoom = Math.min(zoomX, zoomY, 1.2);
+        targetZoom = Math.max(targetZoom, 0.3);
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        canvasData.viewport.zoom = targetZoom;
+        canvasData.viewport.panX = rect.width / 2 - centerX * targetZoom;
+        canvasData.viewport.panY = rect.height / 2 - centerY * targetZoom;
+
+        updateViewportTransform();
+        API.persistData(canvasData);
+      }
+
+      // --- Canvas Drag & Pan / Zoom Interaction ---
+      canvasContainer.addEventListener('mousedown', (e) => {
+        // Only pan if clicking on canvas background or middle button or spacebar
+        if (e.target === canvasContainer || e.target.classList.contains('canvas-grid') || e.target.id === 'edges-svg' || e.button === 1 || e.spaceKey) {
+          isPanning = true;
+          startPan = {
+            x: e.clientX - canvasData.viewport.panX,
+            y: e.clientY - canvasData.viewport.panY
+          };
+          canvasContainer.classList.add('panning');
+          selectedNodeId = null;
+          renderCanvas();
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isPanning) {
+          canvasData.viewport.panX = e.clientX - startPan.x;
+          canvasData.viewport.panY = e.clientY - startPan.y;
+          updateViewportTransform();
+        } else if (draggingNodeId) {
+          const worldPos = clientToWorld(e.clientX, e.clientY);
+          canvasData.nodes[draggingNodeId] = {
+            x: Math.round(worldPos.x - dragNodeOffset.x),
+            y: Math.round(worldPos.y - dragNodeOffset.y)
+          };
+          // Real-time update of node position & curves
+          const nodeEl = document.getElementById(`node-${draggingNodeId}`);
+          if (nodeEl) {
+            nodeEl.style.transform = `translate(${canvasData.nodes[draggingNodeId].x}px, ${canvasData.nodes[draggingNodeId].y}px)`;
+          }
+          renderCanvasEdges();
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          canvasContainer.classList.remove('panning');
+          API.persistData(canvasData);
+        }
+        if (draggingNodeId) {
+          const nodeEl = document.getElementById(`node-${draggingNodeId}`);
+          if (nodeEl) nodeEl.classList.remove('dragging');
+          draggingNodeId = null;
+          API.persistData(canvasData);
+        }
+      });
+
+      // Mouse Wheel Zoom
+      canvasContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        const rect = canvasContainer.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const currentZoom = canvasData.viewport.zoom;
+        let newZoom = currentZoom * zoomFactor;
+        newZoom = Math.max(0.2, Math.min(2.5, newZoom));
+
+        // Zoom toward cursor
+        canvasData.viewport.panX = mouseX - (mouseX - canvasData.viewport.panX) * (newZoom / currentZoom);
+        canvasData.viewport.panY = mouseY - (mouseY - canvasData.viewport.panY) * (newZoom / currentZoom);
+        canvasData.viewport.zoom = newZoom;
+
+        updateViewportTransform();
+      }, { passive: false });
+
+      // Canvas Drag & Drop from Sidebar
+      canvasContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+
+        const rect = canvasContainer.getBoundingClientRect();
+        dropIndicator.style.display = 'block';
+        dropIndicator.style.left = `${e.clientX - rect.left - 135}px`;
+        dropIndicator.style.top = `${e.clientY - rect.top - 50}px`;
+      });
+
+      canvasContainer.addEventListener('dragleave', (e) => {
+        if (e.relatedTarget === null || !canvasContainer.contains(e.relatedTarget)) {
+          dropIndicator.style.display = 'none';
+        }
+      });
+
+      canvasContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropIndicator.style.display = 'none';
+
+        const taskId = e.dataTransfer.getData('text/plain');
+        if (!taskId) return;
+
+        const worldPos = clientToWorld(e.clientX, e.clientY);
+        addNodeToCanvas(taskId, worldPos.x - 135, worldPos.y - 50);
+      });
+
+      // --- Toolbar Controls ---
+      document.getElementById('btn-zoom-in').addEventListener('click', () => {
+        canvasData.viewport.zoom = Math.min(2.5, canvasData.viewport.zoom * 1.2);
+        updateViewportTransform();
+        API.persistData(canvasData);
+      });
+
+      document.getElementById('btn-zoom-out').addEventListener('click', () => {
+        canvasData.viewport.zoom = Math.max(0.2, canvasData.viewport.zoom / 1.2);
+        updateViewportTransform();
+        API.persistData(canvasData);
+      });
+
+      document.getElementById('btn-reset-zoom').addEventListener('click', () => {
+        canvasData.viewport.zoom = 1;
+        updateViewportTransform();
+        API.persistData(canvasData);
+      });
+
+      document.getElementById('btn-fit-screen').addEventListener('click', fitToScreen);
+      document.getElementById('btn-auto-layout').addEventListener('click', autoLayout);
+
+      document.getElementById('btn-clear-canvas').addEventListener('click', () => {
+        if (confirm('Return all tasks on canvas back to the sidebar? This will also clear links.')) {
+          canvasData.nodes = {};
+          canvasData.links = [];
+          selectedNodeId = null;
+          API.persistData(canvasData);
+          renderSidebar();
+          renderCanvas();
+          showToast('Canvas cleared');
+        }
+      });
+
+      document.getElementById('btn-add-all-canvas').addEventListener('click', () => {
+        tasks.forEach((t, index) => {
+          if (!canvasData.nodes[t.id]) {
+            canvasData.nodes[t.id] = {
+              x: 80 + (index % 4) * 300,
+              y: 80 + Math.floor(index / 4) * 160
+            };
+          }
+        });
+        API.persistData(canvasData);
+        renderSidebar();
+        renderCanvas();
+        fitToScreen();
+      });
+
+      // --- Sidebar Controls ---
+      const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+      const btnExpandSidebar = document.getElementById('btn-expand-sidebar');
+
+      btnToggleSidebar.addEventListener('click', () => {
+        sidebar.classList.add('collapsed');
+      });
+
+      btnExpandSidebar.addEventListener('click', () => {
+        sidebar.classList.remove('collapsed');
+      });
+
+      projectFilter.addEventListener('change', renderSidebar);
+      taskSearchInput.addEventListener('input', renderSidebar);
+
+      // Help Modal
+      const helpModal = document.getElementById('help-modal');
+      document.getElementById('btn-help').addEventListener('click', () => {
+        helpModal.classList.add('open');
+      });
+      document.getElementById('btn-close-modal').addEventListener('click', () => {
+        helpModal.classList.remove('open');
+      });
+      document.getElementById('btn-close-modal-2').addEventListener('click', () => {
+        helpModal.classList.remove('open');
+      });
+      helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) helpModal.classList.remove('open');
+      });
+
+      // Utility to escape HTML
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // --- Initialization ---
+      async function init() {
+        try {
+          const [loadedTasks, loadedProjects, loadedTags, savedData] = await Promise.all([
+            API.getTasks(),
+            API.getAllProjects(),
+            API.getAllTags(),
+            API.loadData()
+          ]);
+
+          tasks = loadedTasks || [];
+          const projects = loadedProjects || [];
+          const tags = loadedTags || [];
+
+          projectsMap = {};
+          projects.forEach(p => { projectsMap[p.id] = p; });
+
+          tagsMap = {};
+          tags.forEach(t => { tagsMap[t.id] = t; });
+
+          // Populate Project Filter
+          projectFilter.innerHTML = '<option value="ALL">All Boards / Projects</option>';
+          projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.title;
+            projectFilter.appendChild(opt);
+          });
+
+          // Restore saved canvas layout
+          if (savedData) {
+            if (savedData.nodes) canvasData.nodes = savedData.nodes;
+            if (savedData.links) canvasData.links = savedData.links;
+            if (savedData.viewport) canvasData.viewport = savedData.viewport;
+          } else {
+            // First time sample setup if mock mode
+            if (!isLivePlugin && tasks.length > 0) {
+              canvasData.nodes['task-1'] = { x: 80, y: 80 };
+              canvasData.nodes['task-2'] = { x: 80, y: 260 };
+              canvasData.nodes['task-3'] = { x: 420, y: 80 };
+              canvasData.nodes['task-4'] = { x: 420, y: 260 };
+              canvasData.nodes['task-5'] = { x: 760, y: 170 };
+              canvasData.links = [
+                { id: 'l1', from: 'task-1', to: 'task-3' },
+                { id: 'l2', from: 'task-2', to: 'task-4' },
+                { id: 'l3', from: 'task-3', to: 'task-5' },
+                { id: 'l4', from: 'task-4', to: 'task-5' },
+              ];
+            }
+          }
+
+          updateViewportTransform();
+          renderSidebar();
+          renderCanvas();
+
+          // Listen for hooks if inside Super Productivity
+          if (isLivePlugin && window.PluginAPI.registerHook) {
+            window.PluginAPI.registerHook('taskUpdate', async () => {
+              tasks = await API.getTasks();
+              renderSidebar();
+              renderCanvas();
+            });
+            window.PluginAPI.registerHook('taskComplete', async () => {
+              tasks = await API.getTasks();
+              renderSidebar();
+              renderCanvas();
+            });
+            window.PluginAPI.registerHook('taskCreated', async () => {
+              tasks = await API.getTasks();
+              renderSidebar();
+              renderCanvas();
+            });
+            window.PluginAPI.registerHook('taskDelete', async () => {
+              tasks = await API.getTasks();
+              renderSidebar();
+              renderCanvas();
+            });
+          }
+        } catch (err) {
+          console.error('[Task Canvas] Initialization failed:', err);
+        }
+      }
+
+      // Start application
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

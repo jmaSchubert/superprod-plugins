@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="bar-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#a7f3d0" />
+    </linearGradient>
+    <filter id="m-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded card -->
+  <rect x="4" y="4" width="40" height="40" rx="8" fill="url(#m-grad)" filter="url(#m-shadow)" />
+
+  <!-- Flagpole -->
+  <line x1="16" y1="12" x2="16" y2="30" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" />
+
+  <!-- Flag Banner -->
+  <path d="M 16 13 L 29 18 L 16 23 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round" />
+
+  <!-- Small Checkpoint Dot at Flag Base -->
+  <circle cx="16" cy="30" r="2.5" fill="#ffffff" />
+
+  <!-- Target Milestone Ring -->
+  <circle cx="32" cy="18" r="4.5" fill="none" stroke="#ffffff" stroke-width="2" />
+  <circle cx="32" cy="18" r="2" fill="#ffffff" />
+
+  <!-- Progress Bar Track -->
+  <rect x="12" y="35" width="24" height="4" rx="2" fill="rgba(0, 0, 0, 0.28)" />
+
+  <!-- Progress Bar Fill -->
+  <rect x="12" y="35" width="16" height="4" rx="2" fill="url(#bar-grad)" />
+</svg>

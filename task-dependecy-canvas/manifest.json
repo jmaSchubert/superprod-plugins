@@ -1,0 +1,13 @@
+{
+  "id": "task-dependency-canvas",
+  "name": "Task Dependency Canvas",
+  "version": "1.0.0",
+  "description": "2D infinite canvas to visualize and link task dependencies with drag-and-drop",
+  "manifestVersion": 1,
+  "minSupVersion": "14.0.0",
+  "icon": "icon.svg",
+  "iFrame": true,
+  "sidePanel": false,
+  "permissions": ["getTasks", "updateTask"],
+  "hooks": ["taskUpdate", "taskComplete", "taskCreated", "taskDelete", "persistedDataChanged"]
+}

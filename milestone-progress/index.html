@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milestone Progress Tracker</title>
+  <style>
+    /* CSS Design System & Theme Variables */
+    :root {
+      --bg: #181926;
+      --bg-darker: #12131c;
+      --bg-card: #24273a;
+      --bg-card-hover: #292d42;
+      --bg-card-alt: #1e2030;
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      --card-border: 1px solid rgba(255, 255, 255, 0.08);
+      --card-border-hover: 1px solid rgba(255, 255, 255, 0.16);
+      --text-main: #cad3f5;
+      --text-muted: #939ab7;
+      --text-dim: #6e738d;
+      --divider: rgba(255, 255, 255, 0.08);
+      
+      /* Vibrant Accent Colors */
+      --c-emerald: #10b981;
+      --c-emerald-light: #34d399;
+      --c-emerald-dim: rgba(16, 185, 129, 0.15);
+      --c-primary: #8aadf4;
+      --c-primary-hover: #7ba2eb;
+      --c-primary-dim: rgba(138, 173, 244, 0.15);
+      --c-accent: #c6a0f6;
+      --c-accent-dim: rgba(198, 160, 246, 0.15);
+      --c-warn: #ed8796;
+      --c-warn-dim: rgba(237, 135, 150, 0.15);
+      --c-amber: #eed49f;
+      --c-amber-dim: rgba(238, 212, 159, 0.15);
+      --c-teal: #8bd5ca;
+      --c-teal-dim: rgba(139, 213, 202, 0.15);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-stack);
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.15);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    /* Top App Header */
+    #app-header {
+      background: var(--bg-darker);
+      border-bottom: 1px solid var(--divider);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .brand-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--divider);
+      padding: 6px 16px;
+      border-radius: 30px;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .stat-pill-label {
+      color: var(--text-muted);
+    }
+
+    .stat-pill-val {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-pill-val.emerald { color: var(--c-emerald-light); }
+    .stat-pill-val.amber { color: var(--c-amber); }
+    .stat-pill-val.primary { color: var(--c-primary); }
+
+    .stat-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--divider);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .btn-primary {
+      background: var(--c-emerald);
+      color: #0b1a13;
+    }
+    .btn-primary:hover {
+      background: var(--c-emerald-light);
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--divider);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .btn-icon {
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      font-size: 15px;
+    }
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    /* Filter & Controls Toolbar */
+    #filter-toolbar {
+      background: var(--bg-card-alt);
+      border-bottom: 1px solid var(--divider);
+      padding: 10px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Project Filter Pills */
+    .project-pill-list {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .proj-filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-darker);
+      border: 1px solid var(--divider);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      user-select: none;
+    }
+
+    .proj-filter-btn:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .proj-filter-btn.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--c-emerald);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .proj-filter-btn .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .proj-filter-btn .badge-count {
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 10px;
+    }
+
+    /* Custom Form Controls */
+    .select-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .custom-select {
+      background: var(--bg-darker);
+      border: 1px solid var(--divider);
+      color: var(--text-main);
+      padding: 7px 30px 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s ease;
+    }
+    .custom-select:hover, .custom-select:focus {
+      border-color: var(--c-primary);
+    }
+
+    .select-icon {
+      position: absolute;
+      right: 10px;
+      pointer-events: none;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .search-box {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: 240px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-darker);
+      border: 1px solid var(--divider);
+      color: var(--text-main);
+      padding: 7px 12px 7px 32px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .search-input:focus {
+      border-color: var(--c-primary);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .filter-pills {
+      display: flex;
+      align-items: center;
+      background: var(--bg-darker);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .pill-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .pill-btn:hover {
+      color: #fff;
+    }
+    .pill-btn.active {
+      background: var(--c-primary);
+      color: #12131c;
+      font-weight: 700;
+    }
+
+    .view-mode-toggle {
+      display: flex;
+      align-items: center;
+      background: var(--bg-darker);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .view-btn:hover { color: #fff; }
+    .view-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    /* Main Content Area */
+    #main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Overview Banner for Selected Filter */
+    .filter-summary-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(138, 173, 244, 0.08) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-summary-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .summary-project-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .summary-project-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .filter-summary-metrics {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .metric-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-block-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-block-val {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Grid Layout for Milestone Cards */
+    .milestones-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+
+    /* List Layout for Compact View */
+    .milestones-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Milestone Card */
+    .milestone-card {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .milestone-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Accent top stripe for milestone color */
+    .card-top-accent {
+      height: 4px;
+      width: 100%;
+      background: var(--c-emerald);
+      transition: height 0.15s ease;
+    }
+
+    .milestone-card-inner {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* Milestone Card Header */
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .card-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+
+    .project-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      max-width: 170px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .project-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .due-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+
+    .due-badge.overdue {
+      background: var(--c-warn-dim);
+      color: var(--c-warn);
+      border: 1px solid rgba(237, 135, 150, 0.3);
+    }
+
+    .due-badge.soon {
+      background: var(--c-amber-dim);
+      color: var(--c-amber);
+      border: 1px solid rgba(238, 212, 159, 0.3);
+    }
+
+    .due-badge.done {
+      background: var(--c-emerald-dim);
+      color: var(--c-emerald-light);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+    }
+
+    /* Progress Bars Section */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .bar-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .bar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .bar-title {
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bar-stats {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .bar-stats .stat-dim {
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* The Progress Track and Fill */
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    /* Gradients for bars */
+    .progress-fill.tasks-bar {
+      background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    }
+
+    .progress-fill.time-bar {
+      background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+    }
+
+    .progress-fill.time-bar.warning {
+      background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+    }
+
+    .progress-fill.time-bar.overtime {
+      background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+    }
+
+    .progress-fill.leftover-bar {
+      background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+    }
+
+    .progress-fill.leftover-bar.cleared {
+      background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    }
+
+    .progress-fill.leftover-bar.overdue {
+      background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+    }
+
+    .bar-subtext {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .bar-highlight {
+      font-weight: 700;
+      color: var(--c-emerald-light);
+    }
+
+    .bar-highlight.amber {
+      color: var(--c-amber);
+    }
+
+    .bar-highlight.overtime {
+      color: var(--c-warn);
+    }
+
+    /* Metrics Quick Badges */
+    .quick-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .quick-metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      text-align: center;
+    }
+
+    .quick-metric-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+    }
+
+    .quick-metric-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .quick-metric-val.emerald { color: var(--c-emerald-light); }
+    .quick-metric-val.blue { color: var(--c-primary); }
+    .quick-metric-val.amber { color: var(--c-amber); }
+
+    /* Expandable Tasks Container */
+    .tasks-toggle-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--divider);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .tasks-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .tasks-accordion {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 4px;
+    }
+
+    .tasks-accordion.open {
+      display: flex;
+    }
+
+    .task-item-row {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .task-item-row:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .task-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .task-checkbox {
+      width: 17px;
+      height: 17px;
+      cursor: pointer;
+      accent-color: var(--c-emerald);
+      flex-shrink: 0;
+    }
+
+    .task-title-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .task-title-text.is-done {
+      text-decoration: line-through;
+      color: var(--text-dim);
+    }
+
+    .task-item-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      font-size: 11px;
+    }
+
+    .task-time-pill {
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .task-action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 3px 5px;
+      border-radius: 3px;
+      transition: all 0.1s ease;
+    }
+    .task-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .task-action-btn.btn-remove:hover {
+      color: var(--c-warn);
+    }
+
+    .task-list-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 6px;
+    }
+
+    /* List View Table Style */
+    .list-view-row {
+      background: var(--bg-card);
+      border: var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      display: grid;
+      grid-template-columns: 2fr 1.5fr 1.5fr 1fr auto;
+      align-items: center;
+      gap: 20px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .list-view-row:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      opacity: 0.7;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 420px;
+      line-height: 1.5;
+    }
+
+    /* Modal Dialogs */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      animation: modalIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes modalIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      background: var(--bg-card-alt);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-textarea, .form-select {
+      background: var(--bg-darker);
+      border: 1px solid var(--divider);
+      color: var(--text-main);
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--c-primary);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+
+    .color-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 4px;
+    }
+
+    .color-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .color-swatch:hover {
+      transform: scale(1.15);
+    }
+    .color-swatch.active {
+      border-color: #fff;
+      transform: scale(1.15);
+    }
+
+    /* Task Picker Checklist in Modal */
+    .task-picker-list {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      background: var(--bg-darker);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .task-picker-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--divider);
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .task-picker-item:last-child {
+      border-bottom: none;
+    }
+
+    .task-picker-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #24273a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toast.warn {
+      border-color: var(--c-warn);
+      color: var(--c-warn);
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+    <!-- Global Stats Dashboard -->
+    <div class="header-stats" id="global-stats-bar">
+      <div class="stat-pill">
+        <span class="stat-pill-label">Milestones:</span>
+        <span class="stat-pill-val emerald" id="stat-total-milestones">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Tasks Done:</span>
+        <span class="stat-pill-val primary" id="stat-tasks-ratio">0 / 0</span>
+        <span class="stat-pill-label" id="stat-tasks-percent">(0%)</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Leftover Time:</span>
+        <span class="stat-pill-val amber" id="stat-total-leftover">0h</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="header-actions">
+      <button class="btn btn-primary" id="btn-create-milestone">
+        <span>+</span> New Milestone
+      </button>
+      <button class="btn btn-secondary" id="btn-detect-milestones" title="Scan tags &amp; auto-generate milestones">
+        <span>⚡</span> Auto-Detect
+      </button>
+      <button class="btn-icon" id="btn-refresh" title="Reload &amp; Re-sync data">
+        🔄
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter & Controls Toolbar -->
+  <section id="filter-toolbar">
+    <!-- Row 1: Project Filter Method (Overview All or Selected Projects) -->
+    <div class="toolbar-row">
+      <div class="filter-group" style="flex: 1;">
+        <span class="filter-label">📁 Projects Filter:</span>
+        <div class="project-pill-list" id="project-pill-list">
+          <button class="proj-filter-btn active" data-proj-id="ALL">
+            <span class="dot" style="background: #10b981;"></span>
+            <span>All Projects</span>
+          </button>
+          <!-- Injected dynamically for each project -->
+        </div>
+      </div>
+
+      <!-- Scope Tasks Checkbox -->
+      <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; user-select: none;" title="When specific project(s) are selected, calculate progress bars strictly for tasks in those projects">
+        <input type="checkbox" id="chk-scope-project-tasks" style="accent-color: var(--c-emerald);" />
+        <span>Strict Project Scope</span>
+      </label>
+    </div>
+
+    <!-- Row 2: Status, Search, Sort & View Controls -->
+    <div class="toolbar-row">
+      <div class="filter-group">
+        <!-- Status Filter -->
+        <span class="filter-label">Status:</span>
+        <div class="filter-pills" id="status-filter-pills">
+          <button class="pill-btn active" data-status="ALL">All</button>
+          <button class="pill-btn" data-status="ACTIVE">In Progress</button>
+          <button class="pill-btn" data-status="COMPLETED">Completed</button>
+          <button class="pill-btn" data-status="OVERDUE">Overdue</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <!-- Search Input -->
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" class="search-input" placeholder="Search milestones or tasks..." />
+        </div>
+
+        <!-- Sort Method -->
+        <div class="select-wrap">
+          <select id="sort-select" class="custom-select" title="Sort order">
+            <option value="due_asc">Target Date (Soonest)</option>
+            <option value="due_desc">Target Date (Latest)</option>
+            <option value="prog_asc">Progress % (Lowest)</option>
+            <option value="prog_desc">Progress % (Highest)</option>
+            <option value="leftover_desc">Leftover Time (Most)</option>
+            <option value="tasks_desc">Assigned Tasks (Most)</option>
+            <option value="name_asc">Name (A-Z)</option>
+          </select>
+          <span class="select-icon">▼</span>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="view-mode-toggle">
+          <button class="view-btn active" id="view-mode-grid" title="Cards Grid View">🔲</button>
+          <button class="view-btn" id="view-mode-list" title="Compact List View">☰</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main View Area -->
+  <main id="main-content">
+    <!-- Active Filter Summary Banner -->
+    <div class="filter-summary-banner" id="filter-summary-banner">
+      <div class="filter-summary-info">
+        <span style="font-size: 13px; color: var(--text-muted);">Showing:</span>
+        <div class="summary-project-badge" id="summary-project-badge">
+          <span class="summary-project-dot" id="summary-project-dot" style="background: #10b981;"></span>
+          <span id="summary-project-name">All Projects</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);" id="summary-filter-status-text">• All Statuses</span>
+      </div>
+
+      <div class="filter-summary-metrics">
+        <div class="metric-block">
+          <span class="metric-block-label">Milestones</span>
+          <span class="metric-block-val" id="banner-val-milestones">0</span>
+        </div>
+        <div class="metric-block">
+          <span class="metric-block-label">Assigned Tasks</span>
+          <span class="metric-block-val" id="banner-val-assigned">0</span>
+        </div>
+        <div class="metric-block">
+          <span class="metric-block-label">Completed Tasks</span>
+          <span class="metric-block-val" style="color: var(--c-emerald-light);" id="banner-val-completed">0</span>
+        </div>
+        <div class="metric-block">
+          <span class="metric-block-label">Total Leftover Time</span>
+          <span class="metric-block-val" style="color: var(--c-amber);" id="banner-val-leftover">0h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Container for Milestone Cards or List Rows -->
+    <div id="milestones-container" class="milestones-grid">
+      <!-- Injected by JavaScript -->
+    </div>
+  </main>
+
+  <!-- Modal: Create / Edit Milestone -->
+  <div class="modal-backdrop" id="modal-milestone">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-milestone-title">New Milestone</h2>
+        <button class="btn-icon" id="btn-close-milestone-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-milestone-id" value="" />
+        
+        <div class="form-group">
+          <label class="form-label">Milestone Title *</label>
+          <input type="text" id="form-milestone-name" class="form-input" placeholder="e.g. Q4 MVP Release, Beta Launch, Sprint 12" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description (Optional)</label>
+          <textarea id="form-milestone-desc" class="form-textarea" placeholder="Key deliverables, success criteria, or notes..."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Associated Project</label>
+            <select id="form-milestone-project" class="form-select">
+              <option value="ALL">Cross-Project (All)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Creation Date</label>
+            <input type="date" id="form-milestone-created" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Target Due Date *</label>
+            <input type="date" id="form-milestone-date" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Color Theme Accent</label>
+          <div class="color-picker-row" id="color-picker-swatches">
+            <div class="color-swatch active" data-color="#10b981" style="background: #10b981;"></div>
+            <div class="color-swatch" data-color="#3b82f6" style="background: #3b82f6;"></div>
+            <div class="color-swatch" data-color="#8b5cf6" style="background: #8b5cf6;"></div>
+            <div class="color-swatch" data-color="#f59e0b" style="background: #f59e0b;"></div>
+            <div class="color-swatch" data-color="#ec4899" style="background: #ec4899;"></div>
+            <div class="color-swatch" data-color="#06b6d4" style="background: #06b6d4;"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-label">Assign Initial Tasks</label>
+            <span style="font-size: 11px; color: var(--text-muted);" id="form-selected-tasks-count">0 selected</span>
+          </div>
+          <input type="text" id="form-task-search" class="form-input" placeholder="Filter tasks list..." style="margin-bottom: 6px; padding: 6px 10px; font-size: 12px;" />
+          <div class="task-picker-list" id="form-tasks-checklist">
+            <!-- Dynamic task checkboxes -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-milestone">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-milestone">Save Milestone</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Assign Tasks to Existing Milestone -->
+  <div class="modal-backdrop" id="modal-assign-tasks">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-assign-title">Assign Tasks to Milestone</h2>
+        <button class="btn-icon" id="btn-close-assign-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="assign-milestone-id" value="" />
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">
+          Select the tasks to include in this milestone. Progress bars and leftover time will update automatically.
+        </p>
+        <input type="text" id="assign-search-input" class="form-input" placeholder="Search tasks by title or project..." style="margin-bottom: 10px;" />
+        <div class="task-picker-list" id="assign-tasks-checklist" style="max-height: 320px;">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-assign">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-assign">Update Assigned Tasks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script>
+    (function () {
+      'use strict';
+
+      // --- Mock Data for Standalone Browser Testing ---
+      const MOCK_PROJECTS = [
+        { id: 'proj-1', title: 'Website Redesign', theme: { primary: '#3b82f6' } },
+        { id: 'proj-2', title: 'Mobile App API', theme: { primary: '#10b981' } },
+        { id: 'proj-3', title: 'Marketing Campaign', theme: { primary: '#f59e0b' } },
+      ];
+
+      const MOCK_TAGS = [
+        { id: 'tag-m1', title: 'M1: Alpha', color: '#10b981' },
+        { id: 'tag-m2', title: 'M2: Beta', color: '#8b5cf6' },
+        { id: 'tag-p1', title: 'P1 - Urgent', color: '#ef4444' },
+        { id: 'tag-p2', title: 'P2 - High', color: '#f97316' },
+      ];
+
+      const MOCK_TASKS = [
+        {
+          id: 'task-1',
+          title: 'Design System & UI Components',
+          projectId: 'proj-1',
+          tagIds: ['tag-m1', 'tag-p1'],
+          timeEstimate: 14400000, // 4h
+          timeSpent: 14400000,    // 4h
+          dueDay: '2026-10-18',
+          isDone: true,
+        },
+        {
+          id: 'task-2',
+          title: 'Authentication & Database Schema',
+          projectId: 'proj-2',
+          tagIds: ['tag-m1', 'tag-p1'],
+          timeEstimate: 18000000, // 5h
+          timeSpent: 18000000,    // 5h
+          dueDay: '2026-10-19',
+          isDone: true,
+        },
+        {
+          id: 'task-3',
+          title: 'Implement User Dashboard Frontend',
+          projectId: 'proj-1',
+          tagIds: ['tag-m1', 'tag-p2'],
+          timeEstimate: 21600000, // 6h
+          timeSpent: 10800000,    // 3h (3h left)
+          dueDay: '2026-10-22',
+          isDone: false,
+        },
+        {
+          id: 'task-4',
+          title: 'Build REST endpoints for Dashboard',
+          projectId: 'proj-2',
+          tagIds: ['tag-m1', 'tag-p2'],
+          timeEstimate: 14400000, // 4h
+          timeSpent: 7200000,     // 2h (2h left)
+          dueDay: '2026-10-21',
+          isDone: false,
+        },
+        {
+          id: 'task-5',
+          title: 'End-to-End Integration Testing',
+          projectId: 'proj-1',
+          tagIds: ['tag-m2'],
+          timeEstimate: 18000000, // 5h
+          timeSpent: 3600000,     // 1h (4h left)
+          dueDay: '2026-11-05',
+          isDone: false,
+        },
+      ];
+
+      // Default Starter Milestones
+      const DEFAULT_MILESTONES = [
+        {
+          id: 'ms-alpha',
+          title: 'Alpha Release v0.9',
+          description: 'Initial internal dogfooding release of frontend and core backend API',
+          projectId: 'ALL',
+          targetDate: '2026-10-24',
+          color: '#10b981',
+          taskIds: ['task-1', 'task-2', 'task-3', 'task-4'],
+          createdAt: Date.now() - 86400000 * 10
+        },
+        {
+          id: 'ms-beta',
+          title: 'Beta Customer Preview',
+          description: 'Customer-facing beta release with marketing campaigns and stress tests',
+          projectId: 'ALL',
+          targetDate: '2026-11-15',
+          color: '#3b82f6',
+          taskIds: ['task-5', 'task-6', 'task-7', 'task-8'],
+          createdAt: Date.now() - 86400000 * 5
+        }
+      ];
+
+      // --- Super Productivity API Safe Bridge ---
+      const isLivePlugin = typeof window.PluginAPI !== 'undefined';
+      const STORAGE_KEY = 'sp_milestones_data';
+
+      const API = {
+        async getTasks() {
+          if (isLivePlugin && window.PluginAPI.getTasks) {
+            try { return await window.PluginAPI.getTasks(); } catch (e) { console.warn(e); }
+          }
+          return MOCK_TASKS;
+        },
+        async getAllProjects() {
+          if (isLivePlugin && window.PluginAPI.getAllProjects) {
+            try { return await window.PluginAPI.getAllProjects(); } catch (e) { console.warn(e); }
+          }
+          return MOCK_PROJECTS;
+        },
+        async getAllTags() {
+          if (isLivePlugin && window.PluginAPI.getAllTags) {
+            try { return await window.PluginAPI.getAllTags(); } catch (e) { console.warn(e); }
+          }
+          return MOCK_TAGS;
+        },
+        async updateTask(taskId, updates) {
+          if (isLivePlugin && window.PluginAPI.updateTask) {
+            try { await window.PluginAPI.updateTask(taskId, updates); } catch (e) { console.warn(e); }
+          } else {
+            const t = tasks.find(x => x.id === taskId);
+            if (t) Object.assign(t, updates);
+          }
+        },
+        async selectTask(taskId) {
+          if (isLivePlugin && window.PluginAPI.selectTask) {
+            try { await window.PluginAPI.selectTask(taskId); } catch (e) { console.warn(e); }
+          } else {
+            showToast('Selected task: ' + taskId);
+          }
+        },
+        async persistData(data) {
+          const str = JSON.stringify(data);
+          if (isLivePlugin && window.PluginAPI.persistDataSynced) {
+            try {
+              await window.PluginAPI.persistDataSynced(str, STORAGE_KEY);
+            } catch (e) {
+              console.warn('persistDataSynced error:', e);
+            }
+          }
+          try {
+            localStorage.setItem(STORAGE_KEY, str);
+          } catch (e) {}
+        },
+        async loadData() {
+          let str = null;
+          if (isLivePlugin && window.PluginAPI.loadSyncedData) {
+            try {
+              str = await window.PluginAPI.loadSyncedData(STORAGE_KEY);
+            } catch (e) {
+              console.warn('loadSyncedData error:', e);
+            }
+          }
+          if (!str) {
+            try {
+              str = localStorage.getItem(STORAGE_KEY);
+            } catch (e) {}
+          }
+          if (str) {
+            try { return JSON.parse(str); } catch (e) { console.warn(e); }
+          }
+          return null;
+        },
+        showSnack(msg, type = 'INFO') {
+          if (isLivePlugin && window.PluginAPI.showSnack) {
+            window.PluginAPI.showSnack({ msg, type });
+          } else {
+            showToast(msg, type === 'WARNING' || type === 'ERROR');
+          }
+        }
+      };
+
+      // --- Application State ---
+      let tasks = [];
+      let projects = [];
+      let tags = [];
+      let milestones = [];
+      let expandedMilestoneIds = new Set();
+
+      // Filter & View State
+      let selectedProjectIds = new Set(['ALL']);
+      let scopeStrictProjectTasks = false;
+      let filterStatus = 'ALL'; // ALL | ACTIVE | COMPLETED | OVERDUE
+      let searchQuery = '';
+      let sortBy = 'due_asc';
+      let viewMode = 'grid'; // grid | list
+
+      // Modal Form State
+      let formSelectedTaskIds = new Set();
+      let formSelectedColor = '#10b981';
+
+      // --- Utilities ---
+      function showToast(msg, isWarn = false) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast' + (isWarn ? ' warn' : '');
+        toast.innerHTML = `<span>${isWarn ? '⚠️' : 'ℹ️'}</span> <span>${escapeHtml(msg)}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(8px)';
+          toast.style.transition = 'all 0.2s ease';
+          setTimeout(() => toast.remove(), 200);
+        }, 3000);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function formatDuration(ms) {
+        if (!ms || ms <= 0) return '0m';
+        const totalMinutes = Math.round(ms / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        if (hours === 0) return `${mins}m`;
+        if (mins === 0) return `${hours}h`;
+        return `${hours}h ${mins}m`;
+      }
+
+      function formatTimeSpan(ms) {
+        if (ms === null || ms === undefined || isNaN(ms)) return '0d';
+        const isNeg = ms < 0;
+        const abs = Math.abs(ms);
+        const totalDays = Math.floor(abs / 86400000);
+        const remHours = Math.floor((abs % 86400000) / 3600000);
+        if (totalDays > 0) {
+          return (isNeg ? '-' : '') + (remHours > 0 ? `${totalDays}d ${remHours}h` : `${totalDays}d`);
+        }
+        const totalHours = Math.floor(abs / 3600000);
+        const remMins = Math.floor((abs % 3600000) / 60000);
+        if (totalHours > 0) {
+          return (isNeg ? '-' : '') + (remMins > 0 ? `${totalHours}h ${remMins}m` : `${totalHours}h`);
+        }
+        const totalMins = Math.round(abs / 60000);
+        return (isNeg ? '-' : '') + `${totalMins}m`;
+      }
+
+      function getProject(projectId) {
+        if (!projectId || projectId === 'ALL') return null;
+        return projects.find(p => p.id === projectId) || null;
+      }
+
+      function getProjectName(projectId) {
+        if (!projectId || projectId === 'ALL') return 'Cross-Project';
+        const p = getProject(projectId);
+        return p ? p.title : 'Unknown Project';
+      }
+
+      function getProjectColor(projectId) {
+        if (!projectId || projectId === 'ALL') return '#10b981';
+        const p = getProject(projectId);
+        return (p && p.theme && p.theme.primary) || '#8aadf4';
+      }
+
+      // Check whether a milestone is included in the project filter
+      function isMilestoneInProjectFilter(milestone) {
+        if (selectedProjectIds.has('ALL')) return true;
+
+        // If milestone has a specific project and it's selected
+        if (milestone.projectId && milestone.projectId !== 'ALL' && selectedProjectIds.has(milestone.projectId)) {
+          return true;
+        }
+
+        // If milestone is cross-project, check if any of its assigned tasks belong to the selected project(s)
+        const assignedTaskIds = new Set(milestone.taskIds || []);
+        const mTasks = tasks.filter(t => assignedTaskIds.has(t.id));
+        return mTasks.some(t => selectedProjectIds.has(t.projectId));
+      }
+
+      // Calculate milestone progress metrics
+      function computeMilestoneMetrics(milestone) {
+        const assignedTaskIds = new Set(milestone.taskIds || []);
+        
+        // Find matching tasks
+        let mTasks = tasks.filter(t => assignedTaskIds.has(t.id));
+
+        // If a specific project filter is selected and milestone is cross-project,
+        // we can optionally restrict the tasks considered or keep all assigned tasks.
+        // We'll calculate based on the milestone's assigned tasks.
+        const totalTasks = mTasks.length;
+        const completedTasks = mTasks.filter(t => t.isDone).length;
+        const remainingTasks = totalTasks - completedTasks;
+        const taskPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        let totalEstimateMs = 0;
+        let totalSpentMs = 0;
+        let leftoverMs = 0;
+
+        mTasks.forEach(t => {
+          const est = t.timeEstimate || 0;
+          const spent = t.timeSpent || 0;
+          totalEstimateMs += est;
+          totalSpentMs += spent;
+          if (!t.isDone) {
+            // Remaining time on unfinished tasks:
+            const taskLeft = Math.max(0, est - spent);
+            leftoverMs += taskLeft;
+          }
+        });
+
+        // Time progress %
+        let timePercent = 0;
+        if (totalEstimateMs > 0) {
+          timePercent = Math.min(100, Math.round((totalSpentMs / totalEstimateMs) * 100));
+        }
+
+        // Leftover time percentage relative to total estimate
+        let leftoverPercent = 0;
+        if (totalEstimateMs > 0) {
+          leftoverPercent = Math.min(100, Math.round((leftoverMs / totalEstimateMs) * 100));
+        } else if (leftoverMs > 0) {
+          leftoverPercent = 100;
+        }
+
+        const isOvertime = totalEstimateMs > 0 && totalSpentMs > totalEstimateMs;
+        const overtimeMs = isOvertime ? totalSpentMs - totalEstimateMs : 0;
+
+        // Due date calculation
+        const todayStr = new Date().toISOString().slice(0, 10);
+        let isOverdue = false;
+        let isCompleted = totalTasks > 0 && completedTasks === totalTasks;
+        let dueText = 'No date';
+        let dueClass = '';
+
+        if (milestone.targetDate) {
+          const diffDays = Math.ceil((new Date(milestone.targetDate) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
+          if (isCompleted) {
+            dueText = '✓ Completed';
+            dueClass = 'done';
+          } else if (diffDays < 0) {
+            isOverdue = true;
+            dueText = `Overdue by ${Math.abs(diffDays)}d`;
+            dueClass = 'overdue';
+          } else if (diffDays === 0) {
+            dueText = 'Due Today';
+            dueClass = 'soon';
+          } else if (diffDays <= 7) {
+            dueText = `Due in ${diffDays}d`;
+            dueClass = 'soon';
+          } else {
+            dueText = `Due ${milestone.targetDate}`;
+          }
+        }
+
+        // Calculate raw time difference between created and due date
+        let createdMs = milestone.createdAt;
+        if (typeof createdMs === 'string') {
+          createdMs = new Date(createdMs.length === 10 ? createdMs + 'T00:00:00' : createdMs).getTime();
+        }
+        if (!createdMs || isNaN(createdMs)) {
+          createdMs = Date.now();
+        }
+
+        let dueMs = null;
+        if (milestone.targetDate) {
+          dueMs = new Date(milestone.targetDate.length === 10 ? milestone.targetDate + 'T23:59:59' : milestone.targetDate).getTime();
+        }
+
+        const nowMs = Date.now();
+        // Total duration between created and target due date
+        const totalSpanMs = dueMs ? Math.max(0, dueMs - createdMs) : 0;
+        // Raw remaining time until target due date
+        const rawScheduleLeftoverMs = dueMs ? dueMs - nowMs : 0;
+        const scheduleElapsedMs = Math.max(0, nowMs - createdMs);
+        const isScheduleOverdue = dueMs !== null && rawScheduleLeftoverMs < 0;
+
+        let rawScheduleLeftoverPercent = 0;
+        if (totalSpanMs > 0) {
+          rawScheduleLeftoverPercent = isScheduleOverdue
+            ? 0
+            : Math.min(100, Math.max(0, Math.round((rawScheduleLeftoverMs / totalSpanMs) * 100)));
+        } else if (rawScheduleLeftoverMs > 0) {
+          rawScheduleLeftoverPercent = 100;
+        }
+
+        const totalSpanText = totalSpanMs > 0 ? formatTimeSpan(totalSpanMs) : 'No due date';
+        const rawScheduleLeftoverText = dueMs ? (rawScheduleLeftoverMs >= 0 ? formatTimeSpan(rawScheduleLeftoverMs) : '0d') : 'No date';
+        const scheduleElapsedText = formatTimeSpan(scheduleElapsedMs);
+        const scheduleOverdueText = isScheduleOverdue ? formatTimeSpan(Math.abs(rawScheduleLeftoverMs)) : '';
+
+        return {
+          tasks: mTasks,
+          totalTasks,
+          completedTasks,
+          remainingTasks,
+          taskPercent,
+          totalEstimateMs,
+          totalSpentMs,
+          leftoverMs,
+          timePercent,
+          leftoverPercent,
+          isOvertime,
+          overtimeMs,
+          isOverdue,
+          isCompleted,
+          dueText,
+          dueClass,
+          createdMs,
+          dueMs,
+          totalSpanMs,
+          rawScheduleLeftoverMs,
+          scheduleElapsedMs,
+          isScheduleOverdue,
+          rawScheduleLeftoverPercent,
+          totalSpanText,
+          rawScheduleLeftoverText,
+          scheduleElapsedText,
+          scheduleOverdueText
+        };
+      }
+
+      // --- Render Functions ---
+
+      function renderProjectFilterOptions() {
+        const container = document.getElementById('project-pill-list');
+        const formProjSelect = document.getElementById('form-milestone-project');
+        if (!container || !formProjSelect) return;
+
+        const isAllActive = selectedProjectIds.has('ALL');
+
+        // Form options
+        let formOptionsHtml = `<option value="ALL">Cross-Project (All)</option>`;
+
+        let pillsHtml = `
+          <button class="proj-filter-btn ${isAllActive ? 'active' : ''}" data-proj-id="ALL" title="Overview milestones across all projects">
+            <span class="dot" style="background: #10b981;"></span>
+            <span>All Projects</span>
+            <span class="badge-count">${milestones.length}</span>
+          </button>
+        `;
+
+        projects.forEach(p => {
+          formOptionsHtml += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.title)}</option>`;
+
+          // Count milestones involving this project
+          const count = milestones.filter(m => {
+            if (m.projectId === p.id) return true;
+            const assignedTaskIds = new Set(m.taskIds || []);
+            return tasks.some(t => assignedTaskIds.has(t.id) && t.projectId === p.id);
+          }).length;
+
+          const isSelected = selectedProjectIds.has(p.id);
+          const color = (p.theme && p.theme.primary) || '#8aadf4';
+
+          pillsHtml += `
+            <button class="proj-filter-btn ${isSelected ? 'active' : ''}" data-proj-id="${escapeHtml(p.id)}" title="Filter to ${escapeHtml(p.title)}">
+              <span class="dot" style="background: ${escapeHtml(color)};"></span>
+              <span>${escapeHtml(p.title)}</span>
+              <span class="badge-count">${count}</span>
+            </button>
+          `;
+        });
+
+        container.innerHTML = pillsHtml;
+        formProjSelect.innerHTML = formOptionsHtml;
+
+        // Attach click handlers to project filter pills
+        container.querySelectorAll('.proj-filter-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const pId = btn.getAttribute('data-proj-id');
+            const isMultiSelect = e.ctrlKey || e.metaKey || e.shiftKey;
+
+            if (pId === 'ALL') {
+              selectedProjectIds = new Set(['ALL']);
+            } else if (isMultiSelect) {
+              selectedProjectIds.delete('ALL');
+              if (selectedProjectIds.has(pId)) {
+                selectedProjectIds.delete(pId);
+                if (selectedProjectIds.size === 0) selectedProjectIds.add('ALL');
+              } else {
+                selectedProjectIds.add(pId);
+              }
+            } else {
+              // Single select toggle: if clicked again, reset to ALL
+              if (selectedProjectIds.has(pId) && selectedProjectIds.size === 1) {
+                selectedProjectIds = new Set(['ALL']);
+              } else {
+                selectedProjectIds = new Set([pId]);
+              }
+            }
+
+            renderProjectFilterOptions();
+            renderMilestones();
+          });
+        });
+      }
+
+      function updateDashboardStats(filteredMilestones) {
+        let totalM = filteredMilestones.length;
+        let totalAssigned = 0;
+        let totalDone = 0;
+        let totalLeftover = 0;
+
+        filteredMilestones.forEach(m => {
+          const stats = computeMilestoneMetrics(m);
+          totalAssigned += stats.totalTasks;
+          totalDone += stats.completedTasks;
+          totalLeftover += stats.leftoverMs;
+        });
+
+        const overallPercent = totalAssigned > 0 ? Math.round((totalDone / totalAssigned) * 100) : 0;
+
+        // Header bar stats
+        document.getElementById('stat-total-milestones').textContent = totalM;
+        document.getElementById('stat-tasks-ratio').textContent = `${totalDone} / ${totalAssigned}`;
+        document.getElementById('stat-tasks-percent').textContent = `(${overallPercent}%)`;
+        document.getElementById('stat-total-leftover').textContent = formatDuration(totalLeftover);
+
+        // Banner stats
+        document.getElementById('banner-val-milestones').textContent = totalM;
+        document.getElementById('banner-val-assigned').textContent = totalAssigned;
+        document.getElementById('banner-val-completed').textContent = `${totalDone} (${overallPercent}%)`;
+        document.getElementById('banner-val-leftover').textContent = formatDuration(totalLeftover);
+
+        // Banner project indicator
+        const projNameEl = document.getElementById('summary-project-name');
+        const projDotEl = document.getElementById('summary-project-dot');
+        const filterStatusTextEl = document.getElementById('summary-filter-status-text');
+
+        if (selectedProjectIds.has('ALL')) {
+          projNameEl.textContent = 'All Projects (Overview)';
+          projDotEl.style.background = '#10b981';
+        } else if (selectedProjectIds.size === 1) {
+          const pId = Array.from(selectedProjectIds)[0];
+          const p = getProject(pId);
+          projNameEl.textContent = p ? p.title : pId;
+          projDotEl.style.background = getProjectColor(pId);
+        } else {
+          projNameEl.textContent = `${selectedProjectIds.size} Selected Projects`;
+          projDotEl.style.background = '#8aadf4';
+        }
+
+        const statusMap = {
+          'ALL': '• All Statuses',
+          'ACTIVE': '• In Progress Only',
+          'COMPLETED': '• Completed Only',
+          'OVERDUE': '• Overdue Only'
+        };
+        const scopeText = scopeStrictProjectTasks && !selectedProjectIds.has('ALL') ? ' [Strict Task Scope]' : '';
+        filterStatusTextEl.textContent = (statusMap[filterStatus] || '') + scopeText;
+      }
+
+      function getFilteredAndSortedMilestones() {
+        return milestones.filter(m => {
+          // Project filter method (all or selected projects)
+          if (!isMilestoneInProjectFilter(m)) {
+            return false;
+          }
+
+          const stats = computeMilestoneMetrics(m);
+
+          // Status filter
+          if (filterStatus === 'ACTIVE') {
+            if (stats.isCompleted) return false;
+          } else if (filterStatus === 'COMPLETED') {
+            if (!stats.isCompleted) return false;
+          } else if (filterStatus === 'OVERDUE') {
+            if (!stats.isOverdue) return false;
+          }
+
+          // Search query
+          if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            const titleMatch = m.title.toLowerCase().includes(q);
+            const descMatch = (m.description || '').toLowerCase().includes(q);
+            const taskMatch = stats.tasks.some(t => t.title.toLowerCase().includes(q));
+            if (!titleMatch && !descMatch && !taskMatch) return false;
+          }
+
+          return true;
+        }).sort((a, b) => {
+          const statsA = computeMilestoneMetrics(a);
+          const statsB = computeMilestoneMetrics(b);
+
+          switch (sortBy) {
+            case 'due_asc': {
+              const dA = a.targetDate || '9999-99-99';
+              const dB = b.targetDate || '9999-99-99';
+              return dA.localeCompare(dB);
+            }
+            case 'due_desc': {
+              const dA = a.targetDate || '0000-00-00';
+              const dB = b.targetDate || '0000-00-00';
+              return dB.localeCompare(dA);
+            }
+            case 'prog_asc':
+              return statsA.taskPercent - statsB.taskPercent;
+            case 'prog_desc':
+              return statsB.taskPercent - statsA.taskPercent;
+            case 'leftover_desc':
+              return statsB.leftoverMs - statsA.leftoverMs;
+            case 'tasks_desc':
+              return statsB.totalTasks - statsA.totalTasks;
+            case 'name_asc':
+              return a.title.localeCompare(b.title);
+            default:
+              return 0;
+          }
+        });
+      }
+
+      function renderMilestones() {
+        const container = document.getElementById('milestones-container');
+        const filtered = getFilteredAndSortedMilestones();
+
+        updateDashboardStats(filtered);
+
+        if (filtered.length === 0) {
+          container.className = '';
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🚩</div>
+              <h3 class="empty-title">No Milestones Found</h3>
+              <p class="empty-desc">
+                ${milestones.length === 0 
+                  ? 'Get started by creating your first milestone or auto-detecting milestones from tagged tasks.' 
+                  : 'No milestones match your current project or status filter criteria.'}
+              </p>
+              <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <button class="btn btn-primary" onclick="window.__openCreateMilestoneModal()">+ Create Milestone</button>
+                ${!selectedProjectIds.has('ALL') || filterStatus !== 'ALL' || searchQuery ? 
+                  `<button class="btn btn-secondary" onclick="window.__resetFilters()">Reset Filters</button>` : ''}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        if (viewMode === 'grid') {
+          container.className = 'milestones-grid';
+          container.innerHTML = filtered.map(m => renderMilestoneCard(m)).join('');
+        } else {
+          container.className = 'milestones-list';
+          container.innerHTML = filtered.map(m => renderMilestoneListRow(m)).join('');
+        }
+
+        // Attach dynamic event listeners
+        attachCardEventListeners();
+      }
+
+      function renderMilestoneCard(m) {
+        const stats = computeMilestoneMetrics(m);
+        const accentColor = m.color || '#10b981';
+        const isExpanded = expandedMilestoneIds.has(m.id);
+        const projName = getProjectName(m.projectId);
+        const projColor = getProjectColor(m.projectId);
+
+        // Time bar classes
+        let timeBarClass = 'time-bar';
+        if (stats.isOvertime) timeBarClass += ' overtime';
+        else if (stats.timePercent > 80) timeBarClass += ' warning';
+
+        return `
+          <div class="milestone-card" data-milestone-id="${escapeHtml(m.id)}">
+            <div class="card-top-accent" style="background: ${escapeHtml(accentColor)};"></div>
+            
+            <div class="milestone-card-inner">
+              <!-- Header -->
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3 class="card-title">${escapeHtml(m.title)}</h3>
+                  <div class="card-meta-line">
+                    <span class="project-pill" title="${escapeHtml(projName)}">
+                      <span class="project-dot" style="background: ${escapeHtml(projColor)};"></span>
+                      ${escapeHtml(projName)}
+                    </span>
+                    <span class="due-badge ${escapeHtml(stats.dueClass)}">
+                      📅 ${escapeHtml(stats.dueText)}
+                    </span>
+                    ${m.createdAt ? `
+                      <span style="font-size: 11px; color: var(--text-dim);" title="Created: ${new Date(m.createdAt).toLocaleDateString()}">
+                        🌱 Created ${new Date(m.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
+
+                <div class="card-actions">
+                  <button class="btn-icon btn-action-edit" data-id="${escapeHtml(m.id)}" title="Edit Milestone">✏️</button>
+                  <button class="btn-icon btn-action-assign" data-id="${escapeHtml(m.id)}" title="Assign Tasks">📋</button>
+                  <button class="btn-icon btn-action-delete" data-id="${escapeHtml(m.id)}" title="Delete Milestone">🗑️</button>
+                </div>
+              </div>
+
+              ${m.description ? `<p style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">${escapeHtml(m.description)}</p>` : ''}
+
+              <!-- Progress Bars Area -->
+              <div class="progress-section">
+                <!-- Progress Bar 1: Task Completion -->
+                <div class="bar-group">
+                  <div class="bar-header">
+                    <span class="bar-title">
+                      <span>✅</span> Completed Tasks
+                    </span>
+                    <span class="bar-stats">
+                      ${stats.completedTasks} <span class="stat-dim">/ ${stats.totalTasks}</span>
+                      <span style="color: var(--c-emerald-light); margin-left: 4px;">(${stats.taskPercent}%)</span>
+                    </span>
+                  </div>
+                  <div class="progress-track" title="${stats.taskPercent}% of tasks completed">
+                    <div class="progress-fill tasks-bar" style="width: ${stats.taskPercent}%;"></div>
+                  </div>
+                  <div class="bar-subtext">
+                    <span>${stats.remainingTasks} task${stats.remainingTasks === 1 ? '' : 's'} remaining</span>
+                    <span class="bar-highlight">${stats.taskPercent}% Done</span>
+                  </div>
+                </div>
+
+                <!-- Progress Bar 2: Time Spent vs Total Estimate -->
+                <div class="bar-group">
+                  <div class="bar-header">
+                    <span class="bar-title">
+                      <span>⏱️</span> Time Spent &amp; Estimate
+                    </span>
+                    <span class="bar-stats">
+                      ${formatDuration(stats.totalSpentMs)} <span class="stat-dim">/ ${formatDuration(stats.totalEstimateMs)}</span>
+                    </span>
+                  </div>
+                  <div class="progress-track" title="${stats.timePercent}% time spent of total estimate">
+                    <div class="progress-fill ${timeBarClass}" style="width: ${stats.timePercent}%;"></div>
+                  </div>
+                  <div class="bar-subtext">
+                    <span>${stats.timePercent}% of estimated time logged</span>
+                    ${stats.isOvertime ? `<span class="bar-highlight overtime">+${formatDuration(stats.overtimeMs)} overtime</span>` : `<span>${formatDuration(Math.max(0, stats.totalEstimateMs - stats.totalSpentMs))} remaining</span>`}
+                  </div>
+                </div>
+
+                <!-- Progress Bar 3: Raw Left Over Time (Created → Due Date) -->
+                <div class="bar-group">
+                  <div class="bar-header">
+                    <span class="bar-title">
+                      <span>⏳</span> Raw Left Over Time (Created → Due)
+                    </span>
+                    <span class="bar-stats">
+                      <strong class="bar-highlight ${stats.isScheduleOverdue ? 'overtime' : 'amber'}">${stats.rawScheduleLeftoverText}</strong>
+                      <span class="stat-dim">/ ${stats.totalSpanText} span</span>
+                      <span style="color: var(--c-amber); margin-left: 4px;">(${stats.rawScheduleLeftoverPercent}% left)</span>
+                    </span>
+                  </div>
+                  <div class="progress-track" title="${stats.rawScheduleLeftoverText} remaining of ${stats.totalSpanText} total time difference between created and due date">
+                    <div class="progress-fill leftover-bar ${stats.isScheduleOverdue ? 'overdue' : ''}" style="width: ${stats.rawScheduleLeftoverPercent}%;"></div>
+                  </div>
+                  <div class="bar-subtext">
+                    <span>${stats.scheduleElapsedText} elapsed since creation</span>
+                    <span class="bar-highlight ${stats.isScheduleOverdue ? 'overtime' : 'amber'}">${stats.isScheduleOverdue ? `Overdue by ${stats.scheduleOverdueText}` : `${stats.rawScheduleLeftoverText} remaining of ${stats.totalSpanText}`}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Stats Grid -->
+              <div class="quick-metrics-row">
+                <div class="quick-metric-box">
+                  <span class="quick-metric-label">Assigned</span>
+                  <span class="quick-metric-val blue">${stats.totalTasks}</span>
+                </div>
+                <div class="quick-metric-box">
+                  <span class="quick-metric-label">Completed</span>
+                  <span class="quick-metric-val emerald">${stats.completedTasks}</span>
+                </div>
+                <div class="quick-metric-box">
+                  <span class="quick-metric-label">Raw Left Over</span>
+                  <span class="quick-metric-val ${stats.isScheduleOverdue ? 'overtime' : 'amber'}">${stats.rawScheduleLeftoverText}</span>
+                </div>
+              </div>
+
+              <!-- Collapsible Tasks Accordion -->
+              <div style="margin-top: 4px;">
+                <button class="tasks-toggle-btn" data-toggle-id="${escapeHtml(m.id)}">
+                  <span>Assigned Tasks (${stats.totalTasks})</span>
+                  <span>${isExpanded ? '▲ Hide' : '▼ Show Tasks'}</span>
+                </button>
+
+                <div class="tasks-accordion ${isExpanded ? 'open' : ''}" id="accordion-${escapeHtml(m.id)}">
+                  ${stats.tasks.length === 0 ? `
+                    <div style="text-align: center; padding: 12px; font-size: 12px; color: var(--text-muted);">
+                      No tasks assigned yet. <a href="#" class="btn-action-assign" data-id="${escapeHtml(m.id)}" style="color: var(--c-primary); text-decoration: none;">+ Assign tasks</a>
+                    </div>
+                  ` : stats.tasks.map(t => renderTaskItemRow(m.id, t)).join('')}
+
+                  <div class="task-list-footer">
+                    <button class="btn btn-secondary btn-action-assign" data-id="${escapeHtml(m.id)}" style="padding: 4px 10px; font-size: 11px;">
+                      + Manage Tasks
+                    </button>
+                    <span style="font-size: 11px; color: var(--text-dim);">
+                      Click task checkbox to complete live
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }
+
+      function renderTaskItemRow(milestoneId, t) {
+        const estStr = formatDuration(t.timeEstimate);
+        const spentStr = formatDuration(t.timeSpent);
+        const tProject = getProject(t.projectId);
+
+        return `
+          <div class="task-item-row" data-task-id="${escapeHtml(t.id)}">
+            <div class="task-item-left">
+              <input type="checkbox" class="task-checkbox" data-task-id="${escapeHtml(t.id)}" ${t.isDone ? 'checked' : ''} title="Toggle task completion status" />
+              <span class="task-title-text ${t.isDone ? 'is-done' : ''}" title="${escapeHtml(t.title)}">
+                ${escapeHtml(t.title)}
+              </span>
+            </div>
+            <div class="task-item-right">
+              ${tProject ? `
+                <span style="font-size: 10px; color: ${escapeHtml(tProject.theme?.primary || '#8aadf4')};" title="Project: ${escapeHtml(tProject.title)}">
+                  ● ${escapeHtml(tProject.title)}
+                </span>
+              ` : ''}
+              <span class="task-time-pill" title="Spent: ${spentStr} / Est: ${estStr}">
+                ${spentStr} / ${estStr}
+              </span>
+              <button class="task-action-btn btn-focus-task" data-task-id="${escapeHtml(t.id)}" title="Focus in Super Productivity">
+                ↗
+              </button>
+              <button class="task-action-btn btn-remove btn-unassign-task" data-milestone-id="${escapeHtml(milestoneId)}" data-task-id="${escapeHtml(t.id)}" title="Remove from milestone">
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderMilestoneListRow(m) {
+        const stats = computeMilestoneMetrics(m);
+        const projName = getProjectName(m.projectId);
+        const projColor = getProjectColor(m.projectId);
+
+        return `
+          <div class="list-view-row" data-milestone-id="${escapeHtml(m.id)}">
+            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: ${escapeHtml(m.color || '#10b981')}; flex-shrink: 0;"></span>
+                <strong style="color: #fff; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(m.title)}</strong>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted);">
+                <span style="color: ${escapeHtml(projColor)};">● ${escapeHtml(projName)}</span>
+                <span>•</span>
+                <span class="due-badge ${escapeHtml(stats.dueClass)}">📅 ${escapeHtml(stats.dueText)}</span>
+                ${m.createdAt ? `<span>•</span> <span style="color: var(--text-dim);" title="Created: ${new Date(m.createdAt).toLocaleDateString()}">🌱 ${new Date(m.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>` : ''}
+              </div>
+            </div>
+
+            <!-- Task Progress -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <span>Tasks: <b>${stats.completedTasks} / ${stats.totalTasks}</b></span>
+                <span style="color: var(--c-emerald-light); font-weight: 700;">${stats.taskPercent}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill tasks-bar" style="width: ${stats.taskPercent}%;"></div>
+              </div>
+            </div>
+
+            <!-- Time Progress -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <span>Time: <b>${formatDuration(stats.totalSpentMs)} / ${formatDuration(stats.totalEstimateMs)}</b></span>
+                <span style="color: var(--c-primary); font-weight: 700;">${stats.timePercent}% spent</span>
+              </div>
+              <div class="progress-track" title="${stats.timePercent}% time spent of total estimate">
+                <div class="progress-fill time-bar ${stats.isOvertime ? 'overtime' : ''}" style="width: ${stats.timePercent}%;"></div>
+              </div>
+            </div>
+
+            <!-- Raw Leftover Time Progress (Created → Due Date) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <span>Leftover: <b style="color: ${stats.isScheduleOverdue ? 'var(--c-warn)' : 'var(--text-main)'};">${stats.rawScheduleLeftoverText}</b></span>
+                <span style="color: var(--c-amber); font-weight: 700;">${stats.rawScheduleLeftoverPercent}% left</span>
+              </div>
+              <div class="progress-track" title="${stats.rawScheduleLeftoverText} remaining of ${stats.totalSpanText} span between created and due date">
+                <div class="progress-fill leftover-bar ${stats.isScheduleOverdue ? 'overdue' : ''}" style="width: ${stats.rawScheduleLeftoverPercent}%;"></div>
+              </div>
+              <div style="font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between;">
+                <span>Span: ${stats.totalSpanText}</span>
+                <span>${stats.scheduleElapsedText} elapsed</span>
+              </div>
+            </div>
+
+            <!-- Quick Pill -->
+            <div style="text-align: center;">
+              <span style="font-size: 12px; font-weight: 700; color: ${stats.isCompleted ? 'var(--c-emerald-light)' : 'var(--text-main)'};">
+                ${stats.isCompleted ? '✓ Done' : `${stats.remainingTasks} left`}
+              </span>
+            </div>
+
+            <!-- Actions -->
+            <div class="card-actions">
+              <button class="btn-icon btn-action-edit" data-id="${escapeHtml(m.id)}" title="Edit">✏️</button>
+              <button class="btn-icon btn-action-assign" data-id="${escapeHtml(m.id)}" title="Assign Tasks">📋</button>
+              <button class="btn-icon btn-action-delete" data-id="${escapeHtml(m.id)}" title="Delete">🗑️</button>
+            </div>
+          </div>
+        `;
+      }
+
+      function attachCardEventListeners() {
+        // Toggle Accordions
+        document.querySelectorAll('.tasks-toggle-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const mId = btn.getAttribute('data-toggle-id');
+            if (expandedMilestoneIds.has(mId)) {
+              expandedMilestoneIds.delete(mId);
+            } else {
+              expandedMilestoneIds.add(mId);
+            }
+            renderMilestones();
+          });
+        });
+
+        // Task Checkbox Toggle (live task complete)
+        document.querySelectorAll('.task-checkbox').forEach(cb => {
+          cb.addEventListener('change', async (e) => {
+            const taskId = cb.getAttribute('data-task-id');
+            const isDone = cb.checked;
+            const t = tasks.find(x => x.id === taskId);
+            if (t) {
+              t.isDone = isDone;
+              await API.updateTask(taskId, { isDone });
+              renderMilestones();
+              API.showSnack(`Task marked as ${isDone ? 'completed' : 'incomplete'}`);
+            }
+          });
+        });
+
+        // Focus task in Super Productivity
+        document.querySelectorAll('.btn-focus-task').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const taskId = btn.getAttribute('data-task-id');
+            API.selectTask(taskId);
+          });
+        });
+
+        // Unassign task from milestone
+        document.querySelectorAll('.btn-unassign-task').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const mId = btn.getAttribute('data-milestone-id');
+            const taskId = btn.getAttribute('data-task-id');
+            const m = milestones.find(x => x.id === mId);
+            if (m) {
+              m.taskIds = (m.taskIds || []).filter(id => id !== taskId);
+              await saveState();
+              renderMilestones();
+              showToast('Task removed from milestone');
+            }
+          });
+        });
+
+        // Milestone Actions: Edit, Assign, Delete
+        document.querySelectorAll('.btn-action-edit').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const mId = btn.getAttribute('data-id');
+            openEditMilestoneModal(mId);
+          });
+        });
+
+        document.querySelectorAll('.btn-action-assign').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const mId = btn.getAttribute('data-id');
+            openAssignTasksModal(mId);
+          });
+        });
+
+        document.querySelectorAll('.btn-action-delete').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const mId = btn.getAttribute('data-id');
+            const m = milestones.find(x => x.id === mId);
+            if (m && confirm(`Delete milestone "${m.title}"?`)) {
+              milestones = milestones.filter(x => x.id !== mId);
+              await saveState();
+              renderMilestones();
+              renderProjectFilterOptions();
+              showToast('Milestone deleted');
+            }
+          });
+        });
+      }
+
+      // --- Modals Logic ---
+
+      function openCreateMilestoneModal() {
+        document.getElementById('modal-milestone-title').textContent = 'New Milestone';
+        document.getElementById('form-milestone-id').value = '';
+        document.getElementById('form-milestone-name').value = '';
+        document.getElementById('form-milestone-desc').value = '';
+        
+        // Auto default date to 14 days from now
+        const d = new Date();
+        const todayStr = d.toISOString().slice(0, 10);
+        document.getElementById('form-milestone-created').value = todayStr;
+
+        d.setDate(d.getDate() + 14);
+        document.getElementById('form-milestone-date').value = d.toISOString().slice(0, 10);
+
+        // Project
+        const activeProj = Array.from(selectedProjectIds)[0];
+        document.getElementById('form-milestone-project').value = (activeProj && activeProj !== 'ALL') ? activeProj : 'ALL';
+
+        formSelectedColor = '#10b981';
+        updateColorSwatches();
+
+        formSelectedTaskIds.clear();
+        renderFormTasksList();
+
+        document.getElementById('modal-milestone').classList.add('open');
+      }
+
+      window.__openCreateMilestoneModal = openCreateMilestoneModal;
+
+      function openEditMilestoneModal(milestoneId) {
+        const m = milestones.find(x => x.id === milestoneId);
+        if (!m) return;
+
+        document.getElementById('modal-milestone-title').textContent = 'Edit Milestone';
+        document.getElementById('form-milestone-id').value = m.id;
+        document.getElementById('form-milestone-name').value = m.title;
+        document.getElementById('form-milestone-desc').value = m.description || '';
+        document.getElementById('form-milestone-created').value = m.createdAt ? new Date(m.createdAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+        document.getElementById('form-milestone-date').value = m.targetDate || '';
+        document.getElementById('form-milestone-project').value = m.projectId || 'ALL';
+
+        formSelectedColor = m.color || '#10b981';
+        updateColorSwatches();
+
+        formSelectedTaskIds = new Set(m.taskIds || []);
+        renderFormTasksList();
+
+        document.getElementById('modal-milestone').classList.add('open');
+      }
+
+      function updateColorSwatches() {
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+          if (sw.getAttribute('data-color') === formSelectedColor) {
+            sw.classList.add('active');
+          } else {
+            sw.classList.remove('active');
+          }
+        });
+      }
+
+      function renderFormTasksList() {
+        const checklist = document.getElementById('form-tasks-checklist');
+        const searchVal = (document.getElementById('form-task-search').value || '').toLowerCase();
+        const selectedProj = document.getElementById('form-milestone-project').value;
+
+        let visibleTasks = tasks;
+        if (selectedProj !== 'ALL') {
+          visibleTasks = visibleTasks.filter(t => t.projectId === selectedProj);
+        }
+
+        if (searchVal) {
+          visibleTasks = visibleTasks.filter(t => t.title.toLowerCase().includes(searchVal));
+        }
+
+        document.getElementById('form-selected-tasks-count').textContent = `${formSelectedTaskIds.size} selected`;
+
+        if (visibleTasks.length === 0) {
+          checklist.innerHTML = `<div style="padding: 12px; font-size: 12px; color: var(--text-muted); text-align: center;">No matching tasks found</div>`;
+          return;
+        }
+
+        checklist.innerHTML = visibleTasks.map(t => {
+          const isChecked = formSelectedTaskIds.has(t.id);
+          const p = getProject(t.projectId);
+          return `
+            <label class="task-picker-item">
+              <input type="checkbox" class="form-task-check" data-task-id="${escapeHtml(t.id)}" ${isChecked ? 'checked' : ''} style="cursor: pointer; accent-color: var(--c-emerald);" />
+              <div style="flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${t.isDone ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${escapeHtml(t.title)}</span>
+                <span style="font-size: 10px; color: var(--text-muted);">${formatDuration(t.timeEstimate)}</span>
+              </div>
+            </label>
+          `;
+        }).join('');
+
+        checklist.querySelectorAll('.form-task-check').forEach(chk => {
+          chk.addEventListener('change', (e) => {
+            const tId = chk.getAttribute('data-task-id');
+            if (chk.checked) formSelectedTaskIds.add(tId);
+            else formSelectedTaskIds.delete(tId);
+            document.getElementById('form-selected-tasks-count').textContent = `${formSelectedTaskIds.size} selected`;
+          });
+        });
+      }
+
+      async function saveMilestoneFromForm() {
+        const idInput = document.getElementById('form-milestone-id').value;
+        const name = document.getElementById('form-milestone-name').value.trim();
+        const desc = document.getElementById('form-milestone-desc').value.trim();
+        const createdInput = document.getElementById('form-milestone-created').value;
+        const date = document.getElementById('form-milestone-date').value;
+        const proj = document.getElementById('form-milestone-project').value;
+
+        if (!name) {
+          alert('Please enter a milestone title');
+          return;
+        }
+
+        const createdTimestamp = createdInput ? new Date(createdInput + 'T00:00:00').getTime() : Date.now();
+
+        if (idInput) {
+          // Update
+          const m = milestones.find(x => x.id === idInput);
+          if (m) {
+            m.title = name;
+            m.description = desc;
+            m.createdAt = createdTimestamp;
+            m.targetDate = date;
+            m.projectId = proj;
+            m.color = formSelectedColor;
+            m.taskIds = Array.from(formSelectedTaskIds);
+          }
+        } else {
+          // Create
+          const newM = {
+            id: 'ms-' + Date.now(),
+            title: name,
+            description: desc,
+            createdAt: createdTimestamp,
+            targetDate: date,
+            projectId: proj,
+            color: formSelectedColor,
+            taskIds: Array.from(formSelectedTaskIds)
+          };
+          milestones.unshift(newM);
+        }
+
+        await saveState();
+        document.getElementById('modal-milestone').classList.remove('open');
+        renderProjectFilterOptions();
+        renderMilestones();
+        showToast(idInput ? 'Milestone updated' : 'Milestone created');
+      }
+
+      // --- Assign Tasks Modal Logic ---
+      let currentAssignMilestoneId = null;
+      let assignSelectedTaskIds = new Set();
+
+      function openAssignTasksModal(milestoneId) {
+        const m = milestones.find(x => x.id === milestoneId);
+        if (!m) return;
+
+        currentAssignMilestoneId = milestoneId;
+        assignSelectedTaskIds = new Set(m.taskIds || []);
+
+        document.getElementById('assign-milestone-id').value = milestoneId;
+        document.getElementById('modal-assign-title').textContent = `Assign Tasks: ${m.title}`;
+        document.getElementById('assign-search-input').value = '';
+
+        renderAssignChecklist();
+        document.getElementById('modal-assign-tasks').classList.add('open');
+      }
+
+      function renderAssignChecklist() {
+        const checklist = document.getElementById('assign-tasks-checklist');
+        const search = (document.getElementById('assign-search-input').value || '').toLowerCase();
+        const m = milestones.find(x => x.id === currentAssignMilestoneId);
+
+        let filteredTasks = tasks;
+        if (m && m.projectId !== 'ALL') {
+          filteredTasks = filteredTasks.filter(t => t.projectId === m.projectId);
+        }
+
+        if (search) {
+          filteredTasks = filteredTasks.filter(t => t.title.toLowerCase().includes(search));
+        }
+
+        if (filteredTasks.length === 0) {
+          checklist.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;">No tasks found</div>`;
+          return;
+        }
+
+        checklist.innerHTML = filteredTasks.map(t => {
+          const isChecked = assignSelectedTaskIds.has(t.id);
+          const p = getProject(t.projectId);
+          return `
+            <label class="task-picker-item">
+              <input type="checkbox" class="assign-task-checkbox" data-task-id="${escapeHtml(t.id)}" ${isChecked ? 'checked' : ''} style="accent-color: var(--c-emerald);" />
+              <div style="flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${t.isDone ? 'text-decoration: line-through; opacity: 0.6;' : ''}">
+                  ${escapeHtml(t.title)}
+                </span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  ${p ? `<span style="font-size: 10px; color: ${p.theme?.primary || '#8aadf4'};">● ${escapeHtml(p.title)}</span>` : ''}
+                  <span style="font-size: 10px; color: var(--text-muted);">${formatDuration(t.timeEstimate)}</span>
+                </div>
+              </div>
+            </label>
+          `;
+        }).join('');
+
+        checklist.querySelectorAll('.assign-task-checkbox').forEach(chk => {
+          chk.addEventListener('change', () => {
+            const tId = chk.getAttribute('data-task-id');
+            if (chk.checked) assignSelectedTaskIds.add(tId);
+            else assignSelectedTaskIds.delete(tId);
+          });
+        });
+      }
+
+      async function saveAssignedTasks() {
+        const m = milestones.find(x => x.id === currentAssignMilestoneId);
+        if (m) {
+          m.taskIds = Array.from(assignSelectedTaskIds);
+          await saveState();
+          document.getElementById('modal-assign-tasks').classList.remove('open');
+          renderMilestones();
+          showToast(`Assigned ${m.taskIds.length} tasks to "${m.title}"`);
+        }
+      }
+
+      // --- Auto-Detect Milestones from Tags or Tasks ---
+      async function autoDetectMilestones() {
+        let createdCount = 0;
+        
+        // Scan tags looking for milestone-like names (e.g. "M1", "Sprint", "Release", "v1.0", "Beta")
+        const candidateTags = tags.filter(tag => {
+          const title = tag.title.toLowerCase();
+          return title.startsWith('m') || title.includes('milestone') || title.includes('sprint') || title.includes('release') || title.includes('v0') || title.includes('v1');
+        });
+
+        candidateTags.forEach(tag => {
+          // Check if milestone already exists for this tag
+          const alreadyExists = milestones.some(m => m.title.toLowerCase() === tag.title.toLowerCase());
+          if (!alreadyExists) {
+            // Find all tasks with this tag
+            const matchingTasks = tasks.filter(t => t.tagIds && t.tagIds.includes(tag.id));
+            if (matchingTasks.length > 0) {
+              // Find latest due date among tasks
+              let latestDue = null;
+              matchingTasks.forEach(t => {
+                if (t.dueDay && (!latestDue || t.dueDay > latestDue)) {
+                  latestDue = t.dueDay;
+                }
+              });
+
+              milestones.push({
+                id: 'ms-auto-' + tag.id,
+                title: tag.title,
+                description: `Auto-generated milestone from tag "${tag.title}"`,
+                projectId: 'ALL',
+                targetDate: latestDue || new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+                color: tag.color || '#3b82f6',
+                taskIds: matchingTasks.map(t => t.id),
+                createdAt: Date.now()
+              });
+              createdCount++;
+            }
+          }
+        });
+
+        if (createdCount > 0) {
+          await saveState();
+          renderProjectFilterOptions();
+          renderMilestones();
+          API.showSnack(`Auto-detected and generated ${createdCount} new milestone(s)!`);
+        } else {
+          API.showSnack('No new milestone tags detected. You can create milestones manually with the "+ New Milestone" button.');
+        }
+      }
+
+      // --- Persistence ---
+      async function saveState() {
+        await API.persistData({
+          milestones: milestones,
+          version: 1
+        });
+      }
+
+      async function loadState() {
+        const data = await API.loadData();
+        if (data && data.milestones && Array.isArray(data.milestones)) {
+          milestones = data.milestones;
+        } else {
+          milestones = DEFAULT_MILESTONES;
+        }
+      }
+
+      window.__resetFilters = function () {
+        selectedProjectIds = new Set(['ALL']);
+        filterStatus = 'ALL';
+        searchQuery = '';
+        document.getElementById('search-input').value = '';
+        document.querySelectorAll('#status-filter-pills .pill-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-status') === 'ALL');
+        });
+        renderProjectFilterOptions();
+        renderMilestones();
+      };
+
+      // --- Event Listeners Initialization ---
+      function initEventListeners() {
+        // Status Filter Pills
+        document.querySelectorAll('#status-filter-pills .pill-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('#status-filter-pills .pill-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterStatus = btn.getAttribute('data-status');
+            renderMilestones();
+          });
+        });
+
+        // Strict Project Scope Checkbox
+        const chkScope = document.getElementById('chk-scope-project-tasks');
+        if (chkScope) {
+          chkScope.addEventListener('change', (e) => {
+            scopeStrictProjectTasks = e.target.checked;
+            renderMilestones();
+          });
+        }
+
+        // Search Input
+        document.getElementById('search-input').addEventListener('input', (e) => {
+          searchQuery = e.target.value;
+          renderMilestones();
+        });
+
+        // Sort Select
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+          sortBy = e.target.value;
+          renderMilestones();
+        });
+
+        // View Mode Toggles
+        document.getElementById('view-mode-grid').addEventListener('click', () => {
+          viewMode = 'grid';
+          document.getElementById('view-mode-grid').classList.add('active');
+          document.getElementById('view-mode-list').classList.remove('active');
+          renderMilestones();
+        });
+
+        document.getElementById('view-mode-list').addEventListener('click', () => {
+          viewMode = 'list';
+          document.getElementById('view-mode-list').classList.add('active');
+          document.getElementById('view-mode-grid').classList.remove('active');
+          renderMilestones();
+        });
+
+        // New Milestone Button
+        document.getElementById('btn-create-milestone').addEventListener('click', openCreateMilestoneModal);
+        document.getElementById('btn-cancel-milestone').addEventListener('click', () => {
+          document.getElementById('modal-milestone').classList.remove('open');
+        });
+        document.getElementById('btn-close-milestone-modal').addEventListener('click', () => {
+          document.getElementById('modal-milestone').classList.remove('open');
+        });
+        document.getElementById('btn-save-milestone').addEventListener('click', saveMilestoneFromForm);
+
+        // Color Swatches in Form
+        document.querySelectorAll('#color-picker-swatches .color-swatch').forEach(sw => {
+          sw.addEventListener('click', () => {
+            formSelectedColor = sw.getAttribute('data-color');
+            updateColorSwatches();
+          });
+        });
+
+        // Task filter in Milestone Modal
+        document.getElementById('form-task-search').addEventListener('input', renderFormTasksList);
+        document.getElementById('form-milestone-project').addEventListener('change', renderFormTasksList);
+
+        // Assign Modal
+        document.getElementById('btn-cancel-assign').addEventListener('click', () => {
+          document.getElementById('modal-assign-tasks').classList.remove('open');
+        });
+        document.getElementById('btn-close-assign-modal').addEventListener('click', () => {
+          document.getElementById('modal-assign-tasks').classList.remove('open');
+        });
+        document.getElementById('btn-save-assign').addEventListener('click', saveAssignedTasks);
+        document.getElementById('assign-search-input').addEventListener('input', renderAssignChecklist);
+
+        // Auto Detect Button
+        document.getElementById('btn-detect-milestones').addEventListener('click', autoDetectMilestones);
+
+        // Refresh Button
+        document.getElementById('btn-refresh').addEventListener('click', async () => {
+          await loadAllData();
+          showToast('Data refreshed');
+        });
+
+        // Close modal on backdrop click
+        document.querySelectorAll('.modal-backdrop').forEach(bd => {
+          bd.addEventListener('click', (e) => {
+            if (e.target === bd) bd.classList.remove('open');
+          });
+        });
+
+        // Super Productivity Real-Time Hooks
+        if (isLivePlugin && window.PluginAPI.registerHook) {
+          const reloadTasks = async () => {
+            tasks = await API.getTasks();
+            renderMilestones();
+          };
+          window.PluginAPI.registerHook('taskUpdate', reloadTasks);
+          window.PluginAPI.registerHook('taskComplete', reloadTasks);
+          window.PluginAPI.registerHook('taskCreated', reloadTasks);
+          window.PluginAPI.registerHook('taskDelete', reloadTasks);
+          window.PluginAPI.registerHook('persistedDataChanged', async () => {
+            await loadState();
+            renderMilestones();
+          });
+        }
+      }
+
+      async function loadAllData() {
+        tasks = await API.getTasks();
+        projects = await API.getAllProjects();
+        tags = await API.getAllTags();
+        await loadState();
+        renderProjectFilterOptions();
+        renderMilestones();
+      }
+
+      // Initialize Application
+      async function init() {
+        initEventListeners();
+        await loadAllData();
+        console.log('[Milestone Progress] Initialized successfully with', milestones.length, 'milestones');
+      }
+
+      // Run on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
